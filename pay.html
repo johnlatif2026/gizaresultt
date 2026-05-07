@@ -1,183 +1,162 @@
-<!-- pay.html -->
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>invoice</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Invoice</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
 
-  <style>
-    body{
-      background:#eef2ff;
-      font-family:Tahoma;
-      display:flex;
-      justify-content:center;
-      align-items:center;
-      min-height:100vh;
-      padding:20px;
-    }
+        body {
+            font-family: 'Tahoma', 'Arial', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
 
-    .invoice{
-      width:100%;
-      max-width:700px;
-      background:#fff;
-      border-radius:20px;
-      padding:30px;
-      box-shadow:0 10px 25px rgba(0,0,0,.1);
-    }
+        .invoice-container {
+            max-width: 600px;
+            width: 100%;
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.2);
+        }
 
-    h1{
-      text-align:center;
-      margin-bottom:25px;
-      color:#222;
-    }
+        h1 {
+            color: #667eea;
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 2em;
+        }
 
-    .row{
-      display:flex;
-      justify-content:space-between;
-      padding:14px 0;
-      border-bottom:1px solid #eee;
-      font-size:18px;
-    }
+        .invoice-header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid #e0e0e0;
+        }
 
-    .status{
-      margin-top:25px;
-      padding:15px;
-      background:#dcfce7;
-      color:#166534;
-      border-radius:12px;
-      text-align:center;
-      font-size:18px;
-      font-weight:bold;
-    }
+        .invoice-details {
+            margin-bottom: 30px;
+        }
 
-    .subjects{
-      margin-top:20px;
-    }
+        .row {
+            display: flex;
+            justify-content: space-between;
+            padding: 15px 0;
+            border-bottom: 1px solid #f0f0f0;
+        }
 
-    .subject{
-      background:#f8fafc;
-      padding:15px;
-      border-radius:12px;
-      margin-bottom:10px;
-    }
-  </style>
+        .row .label {
+            font-weight: bold;
+            color: #555;
+        }
+
+        .row .value {
+            color: #333;
+        }
+
+        .status {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 15px;
+            border-radius: 10px;
+            text-align: center;
+            margin: 20px 0;
+            font-weight: bold;
+        }
+
+        .back-btn {
+            display: inline-block;
+            width: 100%;
+            padding: 12px;
+            background: #28a745;
+            color: white;
+            text-align: center;
+            text-decoration: none;
+            border-radius: 10px;
+            margin-top: 20px;
+            font-weight: bold;
+            transition: opacity 0.3s;
+        }
+
+        .back-btn:hover {
+            opacity: 0.9;
+        }
+
+        .fawry-code {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 10px;
+            text-align: center;
+            font-size: 1.2em;
+            letter-spacing: 2px;
+            font-weight: bold;
+            color: #667eea;
+        }
+    </style>
 </head>
 <body>
-
-<div class="invoice">
-
-  <h1>Invoice</h1>
-
-  <div id="content"></div>
-
-</div>
-
-<script>
-
-  const params = new URLSearchParams(window.location.search);
-
-  const resultMode = params.get("result");
-
-  const content = document.getElementById("content");
-
-  if(resultMode){
-
-    const data = JSON.parse(localStorage.getItem("studentResult"));
-
-    if(!data){
-      content.innerHTML = "<h2>لا توجد بيانات</h2>";
-    }else{
-
-      let subjectsHTML = "";
-
-      if(data.subjects){
-
-        data.subjects.forEach(sub=>{
-
-          subjectsHTML += `
-            <div class="subject">
-              <strong>${sub.name}</strong><br>
-              الدرجة: ${sub.degree}<br>
-              ملحق: ${sub.supplement ? "نعم" : "لا"}
+    <div class="invoice-container">
+        <h1>🧾 Payment invoice</h1>
+        <div class="invoice-header">
+            <h3>نظام الاستعلام عن النتيجة</h3>
+        </div>
+        <div id="invoiceContent">
+            <div class="invoice-details">
+                <div class="row">
+                    <span class="label">الرقم القومي:</span>
+                    <span class="value" id="displayNationalId">-</span>
+                </div>
+                <div class="row">
+                    <span class="label">رقم الهاتف:</span>
+                    <span class="value" id="displayPhone">-</span>
+                </div>
+                <div class="row">
+                    <span class="label">كود فوري:</span>
+                    <span class="value fawry-code" id="displayFawryCode">-</span>
+                </div>
+                <div class="row">
+                    <span class="label">الصلاحية:</span>
+                    <span class="value" id="displayValidity">-</span>
+                </div>
             </div>
-          `;
+            <div class="status">
+                ✅ تم إنشاء الفاتورة بنجاح
+            </div>
+        </div>
+        <a href="/" class="back-btn">🏠 العودة للرئيسية</a>
+    </div>
+
+    <script>
+        // قراءة البيانات من localStorage
+        window.addEventListener('DOMContentLoaded', () => {
+            const nationalId = localStorage.getItem('invoice_nationalId');
+            const phone = localStorage.getItem('invoice_phone');
+            const fawryCode = localStorage.getItem('invoice_fawryCode');
+            const validity = localStorage.getItem('invoice_validity');
+
+            if (nationalId) document.getElementById('displayNationalId').textContent = nationalId;
+            if (phone) document.getElementById('displayPhone').textContent = phone;
+            if (fawryCode) document.getElementById('displayFawryCode').textContent = fawryCode;
+            if (validity) document.getElementById('displayValidity').textContent = validity;
+
+            // تنظيف localStorage بعد العرض
+            setTimeout(() => {
+                localStorage.removeItem('invoice_nationalId');
+                localStorage.removeItem('invoice_phone');
+                localStorage.removeItem('invoice_fawryCode');
+                localStorage.removeItem('invoice_validity');
+            }, 1000);
         });
-      }
-
-      content.innerHTML = `
-        <div class="row">
-          <span>الاسم</span>
-          <span>${data.name || "غير متوفر"}</span>
-        </div>
-
-        <div class="row">
-          <span>الرقم القومي</span>
-          <span>${data.nationalId}</span>
-        </div>
-
-        <div class="row">
-          <span>الحالة</span>
-          <span>${data.isSupplement ? "ملحق" : "ناجح"}</span>
-        </div>
-
-        <div class="subjects">
-          ${subjectsHTML}
-        </div>
-      `;
-    }
-
-  }else{
-
-    const nationalId = params.get("nationalId");
-    const phone = params.get("phone");
-
-    loadInvoice(nationalId,phone);
-  }
-
-  async function loadInvoice(nationalId,phone){
-
-    const res = await fetch("/api/payment-code",{
-      method:"POST",
-      headers:{
-        "Content-Type":"application/json"
-      },
-      body:JSON.stringify({
-        nationalId,
-        phone
-      })
-    });
-
-    const data = await res.json();
-
-    content.innerHTML = `
-      <div class="row">
-        <span>الرقم القومي</span>
-        <span>${nationalId}</span>
-      </div>
-
-      <div class="row">
-        <span>رقم الهاتف</span>
-        <span>${phone}</span>
-      </div>
-
-      <div class="row">
-        <span>كود فوري</span>
-        <span>${data.code || "غير متوفر"}</span>
-      </div>
-
-      <div class="row">
-        <span>الصلاحية</span>
-        <span>24 ساعة</span>
-      </div>
-
-      <div class="status">
-        بعد الدفع يمكن الاستعلام عن النتيجة
-      </div>
-    `;
-  }
-
-</script>
-
+    </script>
 </body>
 </html>
