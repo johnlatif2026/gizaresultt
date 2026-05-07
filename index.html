@@ -15,15 +15,13 @@
             font-family: 'Tahoma', 'Arial', sans-serif;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             min-height: 100vh;
-            display: flex;
-            justify-content: center;
-            align-items: center;
             padding: 20px;
         }
 
         .container {
             max-width: 1200px;
             width: 100%;
+            margin: 0 auto;
         }
 
         h1 {
@@ -110,7 +108,7 @@
             background: #f8f9fa;
             border-radius: 10px;
             display: none;
-            max-height: 500px;
+            max-height: 550px;
             overflow-y: auto;
         }
 
@@ -137,7 +135,7 @@
         .invoice-item {
             display: flex;
             justify-content: space-between;
-            padding: 8px 0;
+            padding: 10px 0;
             border-bottom: 1px solid #e0e0e0;
         }
 
@@ -157,51 +155,27 @@
         }
 
         .subject-failed {
-            color: #dc3545;
             background: #ffe6e6;
-            padding: 5px 10px;
-            border-radius: 5px;
+            padding: 8px 12px;
+            border-radius: 8px;
+            margin: 5px 0;
         }
 
         .subject-passed {
-            color: #28a745;
-        }
-
-        .main-subject {
-            background: #e8f0fe;
-        }
-
-        .secondary-subject {
-            background: #fef9e8;
-        }
-
-        .raw-data {
-            margin-top: 15px;
-            padding: 10px;
-            background: #f0f0f0;
+            background: #e6ffe6;
+            padding: 8px 12px;
             border-radius: 8px;
-            font-size: 12px;
-            overflow-x: auto;
-            white-space: pre-wrap;
-            word-break: break-word;
+            margin: 5px 0;
         }
 
-        .badge {
-            display: inline-block;
-            padding: 3px 8px;
-            border-radius: 12px;
-            font-size: 12px;
+        .total-score {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 12px;
+            border-radius: 10px;
+            margin-top: 15px;
+            text-align: center;
             font-weight: bold;
-        }
-
-        .badge-main {
-            background: #667eea;
-            color: white;
-        }
-
-        .badge-secondary {
-            background: #ff9800;
-            color: white;
         }
 
         @media (max-width: 768px) {
@@ -250,15 +224,18 @@
     <script>
         const API_BASE = window.location.origin;
 
-        // قسم الدفع
+        // قسم الدفع - يحول لصفحة الفاتورة
         document.getElementById('payForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             const nationalId = document.getElementById('nationalIdPay').value;
             const phone = document.getElementById('phonePay').value;
             const resultDiv = document.getElementById('payResult');
+            const submitBtn = e.target.querySelector('button');
 
             resultDiv.style.display = 'block';
-            resultDiv.innerHTML = '<p>⏳ جاري الاتصال بالخادم...</p>';
+            resultDiv.innerHTML = '<p>⏳ جاري معالجة الدفع...</p>';
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'جاري المعالجة...';
 
             try {
                 const response = await fetch(`${API_BASE}/api/pay`, {
@@ -269,38 +246,31 @@
                 const data = await response.json();
 
                 if (data.success) {
-                    resultDiv.innerHTML = `
-                        <div class="invoice">
-                            <h3>🧾 فاتورة الدفع</h3>
-                            <div class="invoice-item"><strong>📇 الرقم القومي:</strong> ${data.nationalId}</div>
-                            <div class="invoice-item"><strong>📞 رقم الهاتف:</strong> ${data.phone}</div>
-                            <div class="invoice-item"><strong>🔑 كود فوري:</strong> <span class="success">${data.fawryCode}</span></div>
-                            <div class="invoice-item"><strong>⏰ الصلاحية:</strong> ${data.validity}</div>
-                            <div class="invoice-item success"><strong>✅ الحالة:</strong> ${data.message}</div>
-                        </div>
-                        ${data.rawApiResponse ? `
-                        <div class="raw-data">
-                            <strong>📡 الرد الأصلي من الخادم:</strong><br>
-                            <pre>${JSON.stringify(data.rawApiResponse, null, 2)}</pre>
-                        </div>
-                        ` : ''}
-                    `;
+                    // التحويل لصفحة الفاتورة
+                    window.location.href = `${API_BASE}/pay?nationalId=${encodeURIComponent(data.nationalId)}&phone=${encodeURIComponent(data.phone)}&fawryCode=${encodeURIComponent(data.fawryCode)}&validity=${encodeURIComponent(data.validity)}`;
                 } else {
                     resultDiv.innerHTML = `<div class="error">❌ ${data.error}</div>`;
+                    submitBtn.disabled = false;
+                    submitBtn.textContent = 'دفع واستعلام';
                 }
             } catch (error) {
                 resultDiv.innerHTML = `<div class="error">❌ حدث خطأ: ${error.message}</div>`;
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'دفع واستعلام';
             }
         });
 
-        // قسم الاستعلام عن النتيجة
+        // قسم الاستعلام عن النتيجة - بدون هاتف ولا كود فوري
         document.getElementById('queryForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             const nationalId = document.getElementById('nationalIdQuery').value;
             const resultDiv = document.getElementById('queryResult');
+            const submitBtn = e.target.querySelector('button');
 
             resultDiv.style.display = 'block';
             resultDiv.innerHTML = '<p>⏳ جاري جلب النتيجة...</p>';
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'جاري البحث...';
 
             try {
                 const response = await fetch(`${API_BASE}/api/query`, {
@@ -312,7 +282,6 @@
 
                 if (data.success) {
                     let mainSubjectsHtml = '';
-                    let secondarySubjectsHtml = '';
                     
                     // عرض المواد المضافة للمجموع
                     if (data.mainSubjects && data.mainSubjects.length > 0) {
@@ -326,14 +295,14 @@
                             `;
                         });
                         mainSubjectsHtml += `
-                            <div class="invoice-item success">
-                                <strong>📊 المجموع الكلي:</strong>
-                                <span>${data.totalScore} / ${data.totalPossible} (${data.totalPercentage}%)</span>
+                            <div class="total-score">
+                                📊 المجموع الكلي: ${data.totalScore} / ${data.totalPossible} (${data.totalPercentage}%)
                             </div>
                         `;
                     }
                     
                     // عرض المواد غير المضافة للمجموع
+                    let secondarySubjectsHtml = '';
                     if (data.secondarySubjects && data.secondarySubjects.length > 0) {
                         secondarySubjectsHtml = '<h4>📖 المواد غير المضافة للمجموع (نجاح/رسوب فقط)</h4>';
                         data.secondarySubjects.forEach(sub => {
@@ -346,13 +315,13 @@
                         });
                     }
                     
-                    // تحذير المواد الملحق غير المضافة للمجموع
+                    // تحذير المواد الملحق
                     let secondaryWarning = '';
                     if (data.secondaryFailed && data.secondaryFailed.length > 0) {
                         secondaryWarning = `
                             <div class="invoice-item warning">
                                 <strong>⚠️ ملاحظة:</strong>
-                                <span>يوجد مواد ملحق (غير مضافة للمجموع): ${data.secondaryFailed.map(s => s.name).join(', ')}</span>
+                                <span>يوجد مواد ملحق (غير مضافة للمجموع): ${data.secondaryFailed.join(', ')}</span>
                             </div>
                         `;
                     }
@@ -361,8 +330,7 @@
                         <div class="invoice">
                             <h3>📊 نتيجة الطالب</h3>
                             <div class="invoice-item"><strong>📇 الرقم القومي:</strong> ${data.nationalId}</div>
-                            <div class="invoice-item"><strong>📞 رقم الهاتف:</strong> ${data.phone}</div>
-                            <div class="invoice-item"><strong>🔑 كود فوري:</strong> ${data.fawryCode}</div>
+                            ${data.studentName ? `<div class="invoice-item"><strong>👤 اسم الطالب:</strong> ${data.studentName}</div>` : ''}
                             <div class="invoice-item ${data.hasFailed ? 'warning' : 'success'}">
                                 <strong>🎓 الحالة العامة:</strong>
                                 <span>${data.overallStatus}</span>
@@ -371,19 +339,15 @@
                             ${secondarySubjectsHtml}
                             ${secondaryWarning}
                         </div>
-                        ${data.rawApiData ? `
-                        <div class="raw-data">
-                            <strong>📡 الرد الأصلي من خادم النتائج:</strong><br>
-                            <pre>${JSON.stringify(data.rawApiData, null, 2)}</pre>
-                            <small class="${data.apiSuccess ? 'success' : 'warning'}">${data.message}</small>
-                        </div>
-                        ` : ''}
                     `;
                 } else {
-                    resultDiv.innerHTML = `<div class="error">❌ ${data.error}<br><small>${data.details || ''}</small></div>`;
+                    resultDiv.innerHTML = `<div class="error">❌ ${data.error}</div>`;
                 }
             } catch (error) {
                 resultDiv.innerHTML = `<div class="error">❌ حدث خطأ: ${error.message}</div>`;
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'استعلام';
             }
         });
     </script>
