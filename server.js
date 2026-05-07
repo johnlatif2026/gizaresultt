@@ -486,7 +486,7 @@ app.get('/pay', (req, res) => {
 });
 
 // منع الوصول المباشر للملفات
-app.get('/pay.html', (req, res) => {
+app.get('/pay', (req, res) => {
     res.redirect('/');
 });
 
