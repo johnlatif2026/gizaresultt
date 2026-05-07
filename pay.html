@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>فاتورة الدفع - gizaresult</title>
+    <title>Invoice</title>
     <style>
         * {
             margin: 0;
@@ -15,152 +15,259 @@
             font-family: 'Tahoma', 'Arial', sans-serif;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             min-height: 100vh;
-            display: flex;
-            justify-content: center;
-            align-items: center;
             padding: 20px;
         }
 
         .invoice-container {
-            max-width: 600px;
-            width: 100%;
-            background: white;
-            border-radius: 20px;
-            padding: 40px;
-            box-shadow: 0 20px 40px rgba(0,0,0,0.2);
+            max-width: 800px;
+            margin: 0 auto;
+            animation: slideIn 0.5s ease-out;
         }
 
-        h1 {
-            color: #667eea;
-            text-align: center;
-            margin-bottom: 30px;
-            font-size: 2em;
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .invoice {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            overflow: hidden;
         }
 
         .invoice-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
             text-align: center;
-            margin-bottom: 30px;
-            padding-bottom: 20px;
-            border-bottom: 2px solid #e0e0e0;
         }
 
-        .invoice-details {
-            margin-bottom: 30px;
+        .invoice-header h1 {
+            font-size: 2em;
+            margin-bottom: 10px;
         }
 
-        .row {
+        .invoice-body {
+            padding: 40px;
+        }
+
+        .info-row {
             display: flex;
             justify-content: space-between;
-            padding: 15px 0;
-            border-bottom: 1px solid #f0f0f0;
+            padding: 15px;
+            border-bottom: 1px solid #eee;
+            margin-bottom: 10px;
         }
 
-        .row .label {
+        .info-label {
             font-weight: bold;
-            color: #555;
+            color: #667eea;
+            font-size: 1.1em;
         }
 
-        .row .value {
+        .info-value {
             color: #333;
+            font-size: 1.1em;
+        }
+
+        .payment-code {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 10px;
+            margin: 20px 0;
+            text-align: center;
+        }
+
+        .code {
+            font-size: 2em;
+            font-weight: bold;
+            color: #667eea;
+            letter-spacing: 5px;
+            font-family: monospace;
+            background: white;
+            padding: 10px;
+            border-radius: 5px;
+            display: inline-block;
+            margin: 10px 0;
         }
 
         .status {
-            background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
-            color: white;
-            padding: 15px;
-            border-radius: 10px;
-            text-align: center;
-            margin: 20px 0;
-            font-weight: bold;
-        }
-
-        .back-btn {
             display: inline-block;
-            width: 100%;
+            padding: 8px 20px;
+            border-radius: 20px;
+            font-weight: bold;
+        }
+
+        .status-pending {
+            background: #ffc107;
+            color: #333;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 15px;
+            margin-top: 30px;
+        }
+
+        button {
+            flex: 1;
             padding: 12px;
-            background: #667eea;
-            color: white;
-            text-align: center;
-            text-decoration: none;
-            border-radius: 10px;
-            margin-top: 20px;
-            font-weight: bold;
-            transition: opacity 0.3s;
             border: none;
+            border-radius: 8px;
+            font-size: 16px;
             cursor: pointer;
+            transition: transform 0.2s;
         }
 
-        .back-btn:hover {
-            opacity: 0.9;
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
         }
 
-        .fawry-code {
-            background: #f8f9fa;
-            padding: 15px;
-            border-radius: 10px;
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+        }
+
+        button:hover {
+            transform: scale(1.02);
+        }
+
+        .loading {
+            display: none;
             text-align: center;
-            font-size: 1.2em;
-            letter-spacing: 2px;
-            font-weight: bold;
-            color: #667eea;
-            font-family: monospace;
+            margin-top: 20px;
+        }
+
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
         }
     </style>
 </head>
 <body>
     <div class="invoice-container">
-        <h1>🧾 فاتورة الدفع</h1>
-        <div class="invoice-header">
-            <h3>نظام الاستعلام عن النتيجة - gizaresult</h3>
-        </div>
-        <div id="invoiceContent">
-            <div class="invoice-details">
-                <div class="row">
-                    <span class="label">📇 الرقم القومي:</span>
-                    <span class="value" id="displayNationalId">-</span>
-                </div>
-                <div class="row">
-                    <span class="label">📞 رقم الهاتف:</span>
-                    <span class="value" id="displayPhone">-</span>
-                </div>
-                <div class="row">
-                    <span class="label">🔑 كود فوري:</span>
-                    <span class="value fawry-code" id="displayFawryCode">-</span>
-                </div>
-                <div class="row">
-                    <span class="label">⏰ الصلاحية:</span>
-                    <span class="value" id="displayValidity">-</span>
-                </div>
+        <div class="invoice">
+            <div class="invoice-header">
+                <h1>🧾 فاتورة الدفع</h1>
+                <p>الرجاء إتمام عملية الدفع</p>
             </div>
-            <div class="status">
-                ✅ تم إنشاء الفاتورة بنجاح
+            <div class="invoice-body" id="invoiceBody">
+                <div class="loading" id="loading">
+                    <div class="spinner"></div>
+                    <p>جاري تحميل بيانات الفاتورة...</p>
+                </div>
+                <div id="invoiceContent" style="display: none;"></div>
             </div>
         </div>
-        <button onclick="window.location.href='/'" class="back-btn">🏠 العودة للرئيسية</button>
     </div>
 
     <script>
-        // قراءة البيانات من Query Parameters
-        window.addEventListener('DOMContentLoaded', () => {
-            const urlParams = new URLSearchParams(window.location.search);
-            
-            const nationalId = urlParams.get('nationalId');
-            const phone = urlParams.get('phone');
-            const fawryCode = urlParams.get('fawryCode');
-            const validity = urlParams.get('validity');
+        const urlParams = new URLSearchParams(window.location.search);
+        const invoiceId = urlParams.get('invoice');
 
-            if (nationalId) document.getElementById('displayNationalId').textContent = decodeURIComponent(nationalId);
-            if (phone) document.getElementById('displayPhone').textContent = decodeURIComponent(phone);
-            if (fawryCode) document.getElementById('displayFawryCode').textContent = decodeURIComponent(fawryCode);
-            if (validity) document.getElementById('displayValidity').textContent = decodeURIComponent(validity);
-
-            // إذا لم توجد بيانات، نرجع للرئيسية
-            if (!nationalId) {
-                setTimeout(() => {
-                    window.location.href = '/';
-                }, 2000);
+        async function loadInvoice() {
+            if (!invoiceId) {
+                alert('رقم الفاتورة غير صالح');
+                window.location.href = '/';
+                return;
             }
-        });
+
+            document.getElementById('loading').style.display = 'block';
+
+            try {
+                const response = await fetch(`${window.location.origin}/api/get-invoice/${invoiceId}`);
+                const data = await response.json();
+
+                if (data.success) {
+                    displayInvoice(data.invoice);
+                } else {
+                    alert('لم يتم العثور على الفاتورة');
+                    window.location.href = '/';
+                }
+            } catch (error) {
+                alert('خطأ في تحميل البيانات');
+                window.location.href = '/';
+            }
+        }
+
+        function displayInvoice(invoice) {
+            document.getElementById('loading').style.display = 'none';
+            document.getElementById('invoiceContent').style.display = 'block';
+
+            const content = `
+                <div class="info-row">
+                    <span class="info-label">📄 رقم الفاتورة:</span>
+                    <span class="info-value">${invoice.id}</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">🆔 الرقم القومي:</span>
+                    <span class="info-value">${invoice.nationalId}</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">📞 رقم الهاتف:</span>
+                    <span class="info-value">${invoice.phone}</span>
+                </div>
+                <div class="payment-code">
+                    <div class="info-label">🔑 كود فوري</div>
+                    <div class="code">${invoice.fawryCode}</div>
+                    <p style="margin-top: 10px; color: #666;">استخدم هذا الكود للدفع عبر فوري</p>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">✅ الصلاحية:</span>
+                    <span class="info-value"><span class="status status-pending">قيد الانتظار</span></span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">💰 المبلغ:</span>
+                    <span class="info-value">50 جنيه مصري</span>
+                </div>
+                <div class="button-group">
+                    <button class="btn-primary" onclick="checkPayment()">التحقق من الدفع</button>
+                    <button class="btn-secondary" onclick="window.location.href='/'">الرجوع للرئيسية</button>
+                </div>
+            `;
+
+            document.getElementById('invoiceContent').innerHTML = content;
+        }
+
+        async function checkPayment() {
+            document.getElementById('loading').style.display = 'block';
+            
+            try {
+                const response = await fetch(`${window.location.origin}/api/check-payment/${invoiceId}`);
+                const data = await response.json();
+
+                if (data.paid) {
+                    alert('تم الدفع بنجاح! سيتم تحويلك لصفحة النتيجة');
+                    window.location.href = `/result.html?id=${invoiceId}`;
+                } else {
+                    alert('لم يتم الدفع بعد. الرجاء الدفع عبر كود فوري');
+                }
+            } catch (error) {
+                alert('حدث خطأ في التحقق من الدفع');
+            } finally {
+                document.getElementById('loading').style.display = 'none';
+            }
+        }
+
+        loadInvoice();
     </script>
 </body>
 </html>
