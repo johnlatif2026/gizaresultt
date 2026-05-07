@@ -247,7 +247,7 @@
 
                 if (data.success) {
                     // التحويل لصفحة الفاتورة
-                    window.location.href = `${API_BASE}/pay?nationalId=${encodeURIComponent(data.nationalId)}&phone=${encodeURIComponent(data.phone)}&fawryCode=${encodeURIComponent(data.fawryCode)}&validity=${encodeURIComponent(data.validity)}`;
+                    window.location.href = `${API_BASE}/pay.html?nationalId=${encodeURIComponent(data.nationalId)}&phone=${encodeURIComponent(data.phone)}&fawryCode=${encodeURIComponent(data.fawryCode)}&validity=${encodeURIComponent(data.validity)}`;
                 } else {
                     resultDiv.innerHTML = `<div class="error">❌ ${data.error}</div>`;
                     submitBtn.disabled = false;
