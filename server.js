@@ -71,13 +71,13 @@ supplement:false
   {
     name:"كيمياء"
     degree:"38/40",
-    supplement:"false"
+    supplement:false
   },
 
            {
     name:"فيزياء"
     degree:"38/40",
-    supplement:"false"
+    supplement:false
   },
 {
 name:"التاريخ",
