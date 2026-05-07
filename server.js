@@ -158,9 +158,9 @@ app.post('/api/simulate-payment/:id', (req, res) => {
     if (invoice) {
         invoice.paid = true;
         invoices.set(req.params.id, invoice);
-        res.json({ success: true });
+        res.json({ success: true, message: 'تم الدفع بنجاح بقيمة 25 جنيه' });
     } else {
-        res.json({ success: false });
+        res.json({ success: false, message: 'الفاتورة غير موجودة' });
     }
 });
 
