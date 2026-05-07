@@ -93,7 +93,9 @@ function extractScoresFromApi(apiData) {
     return scores;
 }
 
-// API للدفع - يجلب كود فوري فقط
+// ==============================================
+// 1. قسم الدفع للاستعلام - يستخدم API طلب النتيجة (RequestResult)
+// ==============================================
 app.post('/api/pay', async (req, res) => {
     try {
         const { nationalId, phone } = req.body;
@@ -102,146 +104,39 @@ app.post('/api/pay', async (req, res) => {
             return res.status(400).json({ success: false, error: 'الرجاء إدخال جميع البيانات' });
         }
 
-        console.log(`💰 دفع للرقم القومي: ${nationalId}, هاتف: ${phone}`);
-        
-        let fawryCode = 'غير متاح';
-        let validity = 'غير محدد';
-        let studentName = '';
-        let rawResponse = null;
-        
-        // جلب كود فوري من API
-        const apiUrl = `https://www.gizaedu.net/api/results/ChatBot/GetResultByNationalId?StudentKey=${nationalId}&EducationId=null&SchoolId=null`;
-        console.log(`📡 استدعاء: ${apiUrl}`);
-        
-        try {
-            const response = await axios.get(apiUrl, {
-                timeout: 15000,
-                headers: {
-                    'Accept': 'application/json',
-                    'User-Agent': 'Mozilla/5.0'
-                }
-            });
-            
-            rawResponse = response.data;
-            console.log('✅ تم استلام الرد');
-            
-            // استخراج كود فوري - بكل الصيغ الممكنة
-            fawryCode = rawResponse?.fawryCode || 
-                       rawResponse?.FawryCode || 
-                       rawResponse?.code || 
-                       rawResponse?.Code ||
-                       rawResponse?.paymentCode ||
-                       rawResponse?.transactionId ||
-                       rawResponse?.id ||
-                       'فشل استخراج الكود';
-            
-            // استخراج الصلاحية
-            validity = rawResponse?.validity || 
-                      rawResponse?.Validaty ||
-                      rawResponse?.expiryDate ||
-                      rawResponse?.expiration ||
-                      rawResponse?.valid_until ||
-                      'صلاحية 30 يوم';
-            
-            // استخراج اسم الطالب
-            studentName = rawResponse?.studentName || 
-                         rawResponse?.name ||
-                         rawResponse?.StudentName ||
-                         rawResponse?.fullName ||
-                         '';
-                         
-        } catch (apiError) {
-            console.error('❌ فشل الاتصال بـ API:', apiError.message);
-            if (apiError.response) {
-                console.error('رد الخطأ:', apiError.response.status, apiError.response.data);
-            }
-            fawryCode = `خطأ: فشل الاتصال بالخادم`;
-            validity = 'غير متاحة حالياً';
-        }
-        
-        // تخزين جلسة الدفع
-        paymentSessions.set(nationalId, {
-            phone: phone,
-            fawryCode: fawryCode,
-            validity: validity,
-            paidAt: new Date().toISOString(),
-            studentName: studentName,
-            apiResponse: rawResponse
-        });
-        
-        // تنظيف الجلسات القديمة (أكثر من ساعة)
-        setTimeout(() => {
-            paymentSessions.delete(nationalId);
-        }, 3600000);
-        
-        res.json({
-            success: true,
-            nationalId: nationalId,
-            phone: phone,
-            fawryCode: fawryCode,
-            validity: validity,
-            studentName: studentName
-        });
+        console.log(`💰 دفع واستعلام عن النتيجة للرقم القومي: ${nationalId}, هاتف: ${phone}`);
 
-    } catch (error) {
-        console.error('💥 خطأ:', error);
-        res.status(500).json({ success: false, error: error.message });
-    }
-});
+        // استخدام API الخاص بـ "طلب النتيجة" لجلب البيانات
+        const resultApiUrl = `https://www.gizaedu.net/api/results/ChatBot/RequestResult?MerchantRefNo=131313&GradeId=11&StageId=3&StudentKey=${nationalId}&MobileNo=${phone}&EducationId=null&SchoolId=null&isVisa=0`;
+        console.log(`📡 استدعاء API النتيجة: ${resultApiUrl}`);
 
-// API للاستعلام عن النتيجة - فقط بعد الدفع
-app.post('/api/query', async (req, res) => {
-    try {
-        const { nationalId } = req.body;
-
-        if (!nationalId) {
-            return res.status(400).json({ success: false, error: 'الرجاء إدخال الرقم القومي' });
-        }
-        
-        // التحقق من دفع الطالب
-        const paymentSession = paymentSessions.get(nationalId);
-        if (!paymentSession) {
-            return res.status(403).json({ 
-                success: false, 
-                error: '⚠️ لم تقم بالدفع بعد. يرجى الدفع أولاً للاستعلام عن النتيجة' 
-            });
-        }
-        
-        console.log(`🔍 استعلام عن نتيجة الرقم القومي: ${nationalId} (مدفوع)`);
-        
         let studentData = null;
         let scoresFromApi = {};
-        
-        // جلب النتيجة من API
-        const phone = paymentSession.phone;
-        const resultApiUrl = `https://www.gizaedu.net/api/results/ChatBot/RequestResult?MerchantRefNo=131313&GradeId=11&StageId=3&StudentKey=${nationalId}&MobileNo=${phone}&EducationId=null&SchoolId=null&isVisa=0`;
-        console.log(`📡 استدعاء API النتائج: ${resultApiUrl}`);
-        
+
         try {
             const resultResponse = await axios.get(resultApiUrl, {
                 timeout: 15000,
-                headers: {
-                    'Accept': 'application/json',
+                headers: { 
+                    'Accept': 'application/json', 
                     'User-Agent': 'Mozilla/5.0'
                 }
             });
-            
             studentData = resultResponse.data;
-            console.log('✅ تم استلام بيانات النتيجة');
-            console.log('البيانات:', JSON.stringify(studentData).substring(0, 500));
+            console.log('✅ تم استلام بيانات النتيجة من API RequestResult');
+            console.log('البيانات المستلمة:', JSON.stringify(studentData).substring(0, 300));
             
             // استخراج الدرجات من API
             scoresFromApi = extractScoresFromApi(studentData);
             console.log('الدرجات المستخرجة:', scoresFromApi);
             
-        } catch (resultError) {
-            console.error('❌ فشل جلب النتيجة:', resultError.message);
-            if (resultError.response) {
-                console.error('رد الخطأ:', resultError.response.status, resultError.response.data);
+        } catch (apiError) {
+            console.error('❌ فشل الاتصال بـ API RequestResult:', apiError.message);
+            if (apiError.response) {
+                console.error('رد الخطأ:', apiError.response.status, apiError.response.data);
             }
             return res.status(500).json({ 
                 success: false, 
-                error: `فشل جلب النتيجة من الخادم: ${resultError.message}` 
+                error: `فشل جلب النتيجة من الخادم: ${apiError.message}` 
             });
         }
         
@@ -325,10 +220,48 @@ app.post('/api/query', async (req, res) => {
             overallStatus = `✅ ناجح - المجموع: ${totalScore}/${totalPossible} (${totalPercentage}%)`;
         }
         
+        // استخراج اسم الطالب
+        let studentName = '';
+        if (studentData) {
+            studentName = studentData.studentName || 
+                         studentData.name ||
+                         studentData.StudentName ||
+                         studentData.fullName ||
+                         '';
+        }
+        
+        // تخزين جلسة الدفع
+        paymentSessions.set(nationalId, {
+            phone: phone,
+            paidAt: new Date().toISOString(),
+            studentName: studentName,
+            fullResult: {
+                overallStatus: overallStatus,
+                mainSubjects: results,
+                secondarySubjects: secondaryResults,
+                totalScore: totalScore,
+                totalPossible: totalPossible,
+                totalPercentage: totalPercentage,
+                hasFailed: hasFailed,
+                secondaryFailed: secondaryFailed
+            }
+        });
+        
+        // تنظيف الجلسات القديمة (أكثر من ساعة)
+        setTimeout(() => {
+            paymentSessions.delete(nationalId);
+        }, 3600000);
+        
+        // إنشاء كود فوري مؤقت
+        const tempFawryCode = `FAWRY-${Date.now()}-${nationalId.slice(-4)}`;
+        
         res.json({
             success: true,
             nationalId: nationalId,
-            studentName: paymentSession.studentName || '',
+            phone: phone,
+            fawryCode: tempFawryCode,
+            validity: 'صلاحية الفاتورة 30 يوم',
+            studentName: studentName,
             overallStatus: overallStatus,
             totalScore: totalScore,
             totalPossible: totalPossible,
@@ -345,17 +278,113 @@ app.post('/api/query', async (req, res) => {
     }
 });
 
-// صفحة الفاتورة - تستقبل البيانات من Query Parameters
-app.get('/pay', (req, res) => {
+// ==============================================
+// 2. قسم استعلام عن النتيجة - يستخدم API جلب كود فوري (GetResultByNationalId)
+// ==============================================
+app.post('/api/query', async (req, res) => {
+    try {
+        const { nationalId } = req.body;
+
+        if (!nationalId) {
+            return res.status(400).json({ success: false, error: 'الرجاء إدخال الرقم القومي' });
+        }
+        
+        // التحقق من دفع الطالب
+        const paymentSession = paymentSessions.get(nationalId);
+        if (!paymentSession) {
+            return res.status(403).json({ 
+                success: false, 
+                error: '⚠️ لم تقم بالدفع بعد. يرجى الدفع أولاً للاستعلام عن النتيجة' 
+            });
+        }
+        
+        console.log(`🔍 استعلام عن كود فوري للرقم القومي: ${nationalId} (مدفوع)`);
+        
+        // استخدام API الخاص بـ "الحصول على الكود"
+        const fawryApiUrl = `https://www.gizaedu.net/api/results/ChatBot/GetResultByNationalId?StudentKey=${nationalId}&EducationId=null&SchoolId=null`;
+        console.log(`📡 استدعاء API الكود: ${fawryApiUrl}`);
+        
+        let fawryCode = 'لم يتم العثور على كود';
+        let studentName = paymentSession.studentName || '';
+        let apiResponse = null;
+        
+        try {
+            const fawryResponse = await axios.get(fawryApiUrl, {
+                timeout: 15000,
+                headers: { 
+                    'Accept': 'application/json', 
+                    'User-Agent': 'Mozilla/5.0'
+                }
+            });
+            
+            apiResponse = fawryResponse.data;
+            console.log('✅ تم استلام كود فوري من API GetResultByNationalId');
+            console.log('الرد:', JSON.stringify(apiResponse));
+            
+            // استخراج كود فوري - بكل الصيغ الممكنة
+            fawryCode = apiResponse?.fawryCode || 
+                       apiResponse?.FawryCode || 
+                       apiResponse?.code || 
+                       apiResponse?.Code ||
+                       apiResponse?.paymentCode ||
+                       apiResponse?.transactionId ||
+                       apiResponse?.id ||
+                       'كود غير متوفر';
+            
+            // استخراج اسم الطالب إذا لم يكن موجود مسبقاً
+            if (!studentName) {
+                studentName = apiResponse?.studentName || 
+                             apiResponse?.name ||
+                             apiResponse?.StudentName ||
+                             apiResponse?.fullName ||
+                             'غير معروف';
+            }
+            
+        } catch (apiError) {
+            console.error('❌ فشل الاتصال بـ API GetResultByNationalId:', apiError.message);
+            if (apiError.response) {
+                console.error('رد الخطأ:', apiError.response.status, apiError.response.data);
+            }
+            // لا نرجع خطأ، بل نعرض أن الكود غير متاح حالياً
+            fawryCode = `خطأ: فشل الاتصال بالخادم - ${apiError.message}`;
+        }
+        
+        // إرجاع الكود الفوري وهوية الطالب
+        res.json({
+            success: true,
+            nationalId: nationalId,
+            studentName: studentName,
+            fawryCode: fawryCode,
+            phone: paymentSession.phone,
+            validity: 'صلاحية الكود 30 يوم',
+            message: 'تم جلب كود الدفع الفوري بنجاح. يمكنك الآن استخدامه للدفع.',
+            rawApiResponse: apiResponse // لإظهار الرد الأصلي للتأكد
+        });
+        
+    } catch (error) {
+        console.error('💥 خطأ:', error);
+        res.status(500).json({ success: false, error: error.message });
+    }
+});
+
+// صفحة الفاتورة
+app.get('/pay.html', (req, res) => {
     res.sendFile(path.join(__dirname, 'pay.html'));
 });
 
 app.listen(PORT, () => {
+    console.log('=' .repeat(60));
     console.log(`🚀 الخادم يعمل على http://localhost:${PORT}`);
-    console.log('=' .repeat(50));
-    console.log('📚 المواد المضافة للمجموع:');
+    console.log('=' .repeat(60));
+    console.log(`📌 منطق العمل الجديد:`);
+    console.log(`   ✅ قسم الدفع: يستخدم API "طلب النتيجة" (RequestResult)`);
+    console.log(`      → يرجع النتيجة الكاملة للمواد والدرجات`);
+    console.log(`   ✅ قسم الاستعلام: يستخدم API "جلب كود فوري" (GetResultByNationalId)`);
+    console.log(`      → يرجع كود فوري للدفع`);
+    console.log('=' .repeat(60));
+    console.log(`📚 المواد المضافة للمجموع:`);
     mainSubjects.forEach(s => console.log(`   - ${s.name}: ${s.total} درجة (النجاح: ${s.pass})`));
-    console.log('📚 المواد غير المضافة للمجموع:');
+    console.log(`📚 المواد غير المضافة للمجموع:`);
     secondarySubjects.forEach(s => console.log(`   - ${s.name}: ${s.total} درجة (النجاح: ${s.pass})`));
-    console.log('=' .repeat(50));
+    console.log('=' .repeat(60));
 });
