@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>gizaresult</title>
+    <title>gizaresult </title>
     <style>
         * {
             margin: 0;
@@ -13,7 +13,7 @@
 
         body {
             font-family: 'Tahoma', 'Arial', sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
             min-height: 100vh;
             display: flex;
             justify-content: center;
@@ -31,7 +31,7 @@
         }
 
         .header {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, #1e3c72, #2a5298);
             color: white;
             padding: 30px;
             text-align: center;
@@ -40,6 +40,15 @@
         .header h1 {
             font-size: 2em;
             margin-bottom: 10px;
+        }
+
+        .header .official-badge {
+            display: inline-block;
+            background: rgba(255,255,255,0.2);
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 0.9em;
+            margin-top: 10px;
         }
 
         .sections {
@@ -53,15 +62,16 @@
             background: #f8f9fa;
             border-radius: 15px;
             padding: 25px;
-            transition: transform 0.3s;
+            transition: transform 0.3s, box-shadow 0.3s;
         }
 
         .section:hover {
             transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
         }
 
         .section h2 {
-            color: #667eea;
+            color: #2a5298;
             margin-bottom: 20px;
             text-align: center;
             font-size: 1.5em;
@@ -89,23 +99,39 @@
 
         input:focus {
             outline: none;
-            border-color: #667eea;
+            border-color: #2a5298;
+        }
+
+        input.invalid {
+            border-color: #dc3545;
+        }
+
+        .error-message {
+            color: #dc3545;
+            font-size: 0.85em;
+            margin-top: 5px;
+            display: none;
         }
 
         button {
             width: 100%;
             padding: 12px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, #1e3c72, #2a5298);
             color: white;
             border: none;
             border-radius: 8px;
             font-size: 18px;
             cursor: pointer;
-            transition: transform 0.2s;
+            transition: transform 0.2s, opacity 0.2s;
         }
 
-        button:hover {
+        button:hover:not(:disabled) {
             transform: scale(1.02);
+        }
+
+        button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
         }
 
         @media (max-width: 768px) {
@@ -123,7 +149,7 @@
 
         .spinner {
             border: 4px solid #f3f3f3;
-            border-top: 4px solid #667eea;
+            border-top: 4px solid #2a5298;
             border-radius: 50%;
             width: 40px;
             height: 40px;
@@ -135,13 +161,23 @@
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
         }
+
+        .footer {
+            background: #f8f9fa;
+            padding: 20px;
+            text-align: center;
+            color: #666;
+            border-top: 1px solid #dee2e6;
+            font-size: 0.85em;
+        }
     </style>
 </head>
 <body>
     <div class="container">
         <div class="header">
             <h1>gizaresult</h1>
-            <p>وزارة التربية والتعليم</p>
+            <p>الإدارة العامة لنظم المعلومات</p>
+            <div class="official-badge">نظام رسمي معتمد</div>
         </div>
         <div class="sections">
             <!-- قسم الدفع -->
@@ -149,18 +185,20 @@
                 <h2>💰 الدفع للاستعلام عن النتيجة</h2>
                 <form id="paymentForm">
                     <div class="form-group">
-                        <label>الرقم القومي</label>
-                        <input type="text" id="nationalIdPay" placeholder="أدخل الرقم القومي" required>
+                        <label>الرقم القومي (14 رقم)</label>
+                        <input type="text" id="nationalIdPay" maxlength="14" placeholder="أدخل الرقم القومي" required>
+                        <div class="error-message" id="nationalIdError">الرجاء إدخال الرقم القومي</div>
                     </div>
                     <div class="form-group">
-                        <label>رقم الهاتف</label>
-                        <input type="tel" id="phonePay" placeholder="أدخل رقم الهاتف" required>
+                        <label>رقم الهاتف المحمول</label>
+                        <input type="tel" id="phonePay" maxlength="11" placeholder="أدخل رقم الهاتف (11 رقم)" required>
+                        <div class="error-message" id="phoneError">الرجاء إدخال رقم هاتف صحيح (11 رقم)</div>
                     </div>
-                    <button type="submit">دفع وتوليد الفاتورة</button>
+                    <button type="submit" id="payBtn">دفع 25 جنيه وتوليد الفاتورة</button>
                 </form>
                 <div id="paymentLoading" class="loading">
                     <div class="spinner"></div>
-                    <p>جاري معالجة الدفع...</p>
+                    <p>جاري إنشاء الفاتورة...</p>
                 </div>
             </div>
 
@@ -169,21 +207,68 @@
                 <h2>🔍 استعلام عن النتيجة</h2>
                 <form id="queryForm">
                     <div class="form-group">
-                        <label>الرقم القومي</label>
-                        <input type="text" id="nationalIdQuery" placeholder="أدخل الرقم القومي" required>
+                        <label>الرقم القومي (14 رقم)</label>
+                        <input type="text" id="nationalIdQuery" maxlength="14" placeholder="أدخل الرقم القومي" required>
+                        <div class="error-message" id="queryNationalIdError">الرجاء إدخال 14 رقم صحيح</div>
                     </div>
-                    <button type="submit">استعلام عن النتيجة</button>
+                    <button type="submit" id="queryBtn">استعلام عن النتيجة</button>
                 </form>
                 <div id="queryLoading" class="loading">
                     <div class="spinner"></div>
-                    <p>جاري الاستعلام...</p>
+                    <p>جاري الاستعلام عن النتيجة...</p>
                 </div>
             </div>
+        </div>
+        <div class="footer">
+            <p>للدفع عبر فوري: 25 جنيه مصري | الدفع لمرة واحدة فقط | صلاحية الفاتورة 24 ساعة</p>
+            <p>© 2025 وزارة التربية والتعليم - جميع الحقوق محفوظة</p>
         </div>
     </div>
 
     <script>
         const API_BASE = window.location.origin;
+
+        // التحقق من صحة الرقم القومي
+        function validateNationalId(nationalId) {
+            return /^\d{14}$/.test(nationalId);
+        }
+
+        // التحقق من صحة رقم الهاتف
+        function validatePhone(phone) {
+            return /^01[0-9]{9}$/.test(phone);
+        }
+
+        // التحقق المباشر للرقم القومي في قسم الدفع
+        document.getElementById('nationalIdPay').addEventListener('input', (e) => {
+            const input = e.target;
+            const errorDiv = document.getElementById('nationalIdError');
+            if (input.value.length === 14 && validateNationalId(input.value)) {
+                input.classList.remove('invalid');
+                errorDiv.style.display = 'none';
+            } else if (input.value.length > 0) {
+                input.classList.add('invalid');
+                errorDiv.style.display = 'block';
+            } else {
+                input.classList.remove('invalid');
+                errorDiv.style.display = 'none';
+            }
+        });
+
+        // التحقق المباشر لرقم الهاتف في قسم الدفع
+        document.getElementById('phonePay').addEventListener('input', (e) => {
+            const input = e.target;
+            const errorDiv = document.getElementById('phoneError');
+            if (input.value.length === 11 && validatePhone(input.value)) {
+                input.classList.remove('invalid');
+                errorDiv.style.display = 'none';
+            } else if (input.value.length > 0) {
+                input.classList.add('invalid');
+                errorDiv.style.display = 'block';
+            } else {
+                input.classList.remove('invalid');
+                errorDiv.style.display = 'none';
+            }
+        });
 
         // معالجة دفع الفاتورة
         document.getElementById('paymentForm').addEventListener('submit', async (e) => {
@@ -191,6 +276,19 @@
             const nationalId = document.getElementById('nationalIdPay').value;
             const phone = document.getElementById('phonePay').value;
 
+            // التحقق من صحة البيانات
+            if (!validateNationalId(nationalId)) {
+                alert('الرجاء إدخال الرقم القومي بشكل صحيح (14 رقم)');
+                return;
+            }
+
+            if (!validatePhone(phone)) {
+                alert('الرجاء إدخال رقم الهاتف بشكل صحيح (يبدأ بـ 01 ويحتوي على 11 رقم)');
+                return;
+            }
+
+            const payBtn = document.getElementById('payBtn');
+            payBtn.disabled = true;
             document.getElementById('paymentLoading').style.display = 'block';
 
             try {
@@ -201,15 +299,35 @@
                 });
 
                 const data = await response.json();
+                
                 if (data.success) {
                     window.location.href = `/pay.html?invoice=${data.invoiceId}`;
                 } else {
-                    alert('حدث خطأ: ' + data.message);
+                    alert(data.message || 'حدث خطأ في إنشاء الفاتورة');
+                    payBtn.disabled = false;
                 }
             } catch (error) {
-                alert('خطأ في الاتصال بالخادم');
+                console.error('Error:', error);
+                alert('حدث خطأ في الاتصال بالخادم. يرجى المحاولة لاحقاً');
+                payBtn.disabled = false;
             } finally {
                 document.getElementById('paymentLoading').style.display = 'none';
+            }
+        });
+
+        // التحقق المباشر للرقم القومي في قسم الاستعلام
+        document.getElementById('nationalIdQuery').addEventListener('input', (e) => {
+            const input = e.target;
+            const errorDiv = document.getElementById('queryNationalIdError');
+            if (input.value.length === 14 && validateNationalId(input.value)) {
+                input.classList.remove('invalid');
+                errorDiv.style.display = 'none';
+            } else if (input.value.length > 0) {
+                input.classList.add('invalid');
+                errorDiv.style.display = 'block';
+            } else {
+                input.classList.remove('invalid');
+                errorDiv.style.display = 'none';
             }
         });
 
@@ -218,6 +336,13 @@
             e.preventDefault();
             const nationalId = document.getElementById('nationalIdQuery').value;
 
+            if (!validateNationalId(nationalId)) {
+                alert('الرجاء إدخال الرقم القومي بشكل صحيح (14 رقم)');
+                return;
+            }
+
+            const queryBtn = document.getElementById('queryBtn');
+            queryBtn.disabled = true;
             document.getElementById('queryLoading').style.display = 'block';
 
             try {
@@ -228,13 +353,20 @@
                 });
 
                 const data = await response.json();
+                
                 if (data.success) {
                     window.location.href = `/result.html?id=${data.invoiceId}`;
-                } else {
+                } else if (data.requiresPayment) {
                     alert(data.message);
+                    window.location.href = '/';
+                } else {
+                    alert(data.message || 'حدث خطأ في الاستعلام عن النتيجة');
+                    queryBtn.disabled = false;
                 }
             } catch (error) {
-                alert('خطأ في الاتصال بالخادم');
+                console.error('Error:', error);
+                alert('حدث خطأ في الاتصال بالخادم');
+                queryBtn.disabled = false;
             } finally {
                 document.getElementById('queryLoading').style.display = 'none';
             }
