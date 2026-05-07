@@ -1,7 +1,9 @@
 {
   "name": "results-system",
   "version": "1.0.0",
+  "description": "Student Results System",
   "main": "server.js",
+  "type": "commonjs",
   "scripts": {
     "start": "node server.js"
   },
