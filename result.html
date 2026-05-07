@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>نتيجة الطالب - نظام النتائج</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Tahoma', 'Arial', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .result-container {
+            max-width: 1000px;
+            margin: 0 auto;
+            animation: slideIn 0.5s ease-out;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .result-card {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            overflow: hidden;
+        }
+
+        .result-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .result-header h1 {
+            font-size: 2em;
+            margin-bottom: 10px;
+        }
+
+        .result-body {
+            padding: 40px;
+        }
+
+        .student-info {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 30px;
+        }
+
+        .info-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px;
+            border-bottom: 1px solid #ddd;
+        }
+
+        .info-label {
+            font-weight: bold;
+            color: #667eea;
+        }
+
+        .subjects-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+
+        .subjects-table th,
+        .subjects-table td {
+            padding: 12px;
+            text-align: center;
+            border-bottom: 1px solid #ddd;
+        }
+
+        .subjects-table th {
+            background: #667eea;
+            color: white;
+            font-weight: bold;
+        }
+
+        .subjects-table tr:hover {
+            background: #f8f9fa;
+        }
+
+        .failed {
+            color: #dc3545;
+            font-weight: bold;
+        }
+
+        .passed {
+            color: #28a745;
+            font-weight: bold;
+        }
+
+        .total-score {
+            margin-top: 30px;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 10px;
+            text-align: center;
+        }
+
+        .total-score h3 {
+            font-size: 1.5em;
+            margin-bottom: 10px;
+        }
+
+        .overall-status {
+            margin-top: 20px;
+            text-align: center;
+            font-size: 1.2em;
+        }
+
+        button {
+            width: 100%;
+            padding: 12px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 18px;
+            cursor: pointer;
+            margin-top: 20px;
+            transition: transform 0.2s;
+        }
+
+        button:hover {
+            transform: scale(1.02);
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+        }
+
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="result-container">
+        <div class="result-card">
+            <div class="result-header">
+                <h1>📊 نتيجة الطالب</h1>
+                <p>الدرجات والتفاصيل</p>
+            </div>
+            <div class="result-body">
+                <div id="loading" class="loading">
+                    <div class="spinner"></div>
+                    <p>جاري تحميل النتيجة...</p>
+                </div>
+                <div id="resultContent" style="display: none;"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const urlParams = new URLSearchParams(window.location.search);
+        const invoiceId = urlParams.get('id');
+
+        async function loadResult() {
+            if (!invoiceId) {
+                alert('بيانات غير صالحة');
+                window.location.href = '/';
+                return;
+            }
+
+            try {
+                const response = await fetch(`${window.location.origin}/api/get-result/${invoiceId}`);
+                const data = await response.json();
+
+                if (data.success && data.paid) {
+                    displayResult(data.result);
+                } else if (!data.paid) {
+                    alert('لم يتم الدفع بعد. الرجاء الدفع أولاً');
+                    window.location.href = `/pay.html?invoice=${invoiceId}`;
+                } else {
+                    alert('لم يتم العثور على النتيجة');
+                    window.location.href = '/';
+                }
+            } catch (error) {
+                alert('خطأ في تحميل النتيجة');
+                window.location.href = '/';
+            }
+        }
+
+        function displayResult(result) {
+            document.getElementById('loading').style.display = 'none';
+            document.getElementById('resultContent').style.display = 'block';
+
+            let subjectsHtml = '';
+            let totalScore = 0;
+            let totalMaxScore = 0;
+
+            result.subjects.forEach(subject => {
+                const statusClass = subject.passed ? 'passed' : 'failed';
+                const statusText = subject.passed ? '✅ ملحق' : '❌ غير ملحق';
+                subjectsHtml += `
+                    <tr>
+                        <td>${subject.name}</td>
+                        <td>${subject.score}</td>
+                        <td>${subject.maxScore}</td>
+                        <td class="${statusClass}">${statusText}</td>
+                    </tr>
+                `;
+                totalScore += subject.score;
+                totalMaxScore += subject.maxScore;
+            });
+
+            const percentage = (totalScore / totalMaxScore * 100).toFixed(2);
+            const overallPassed = result.overallPassed;
+            const overallStatus = overallPassed ? '✅ ناجح' : '❌ غير ناجح';
+            const overallStatusClass = overallPassed ? 'passed' : 'failed';
+
+            const content = `
+                <div class="student-info">
+                    <div class="info-row">
+                        <span class="info-label">🆔 الرقم القومي:</span>
+                        <span>${result.nationalId}</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">📞 رقم الهاتف:</span>
+                        <span>${result.phone}</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">📅 العام الدراسي:</span>
+                        <span>${result.academicYear}</span>
+                    </div>
+                </div>
+
+                <h3>📚 المواد الدراسية</h3>
+                <table class="subjects-table">
+                    <thead>
+                        <tr>
+                            <th>المادة</th>
+                            <th>الدرجة</th>
+                            <th>الدرجة الكلية</th>
+                            <th>الحالة</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${subjectsHtml}
+                    </tbody>
+                </table>
+
+                <div class="total-score">
+                    <h3>المجموع الكلي</h3>
+                    <p style="font-size: 1.5em;">${totalScore} / ${totalMaxScore}</p>
+                    <p>النسبة المئوية: ${percentage}%</p>
+                </div>
+
+                <div class="overall-status">
+                    <h3 class="${overallStatusClass}">النتيجة النهائية: ${overallStatus}</h3>
+                </div>
+
+                <button onclick="window.location.href='/'">العودة للرئيسية</button>
+            `;
+
+            document.getElementById('resultContent').innerHTML = content;
+        }
+
+        loadResult();
+    </script>
+</body>
+</html>
