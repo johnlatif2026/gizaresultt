@@ -106,9 +106,7 @@ app.post('/api/pay', async (req, res) => {
         
         let fawryCode = 'غير متاح';
         let validity = 'غير محدد';
-        let apiSuccess = false;
         let studentName = '';
-        let rawResponse = null;
         
         // جلب كود فوري من API
         const apiUrl = `https://www.gizaedu.net/api/results/ChatBot/GetResultByNationalId?StudentKey=${nationalId}&EducationId=null&SchoolId=null`;
@@ -123,8 +121,7 @@ app.post('/api/pay', async (req, res) => {
                 }
             });
             
-            rawResponse = response.data;
-            apiSuccess = true;
+            const rawResponse = response.data;
             console.log('✅ تم استلام الرد');
             
             // استخراج كود فوري
@@ -159,8 +156,7 @@ app.post('/api/pay', async (req, res) => {
             fawryCode: fawryCode,
             validity: validity,
             paidAt: new Date().toISOString(),
-            studentName: studentName,
-            apiResponse: rawResponse
+            studentName: studentName
         });
         
         // تنظيف الجلسات القديمة (أكثر من ساعة)
@@ -168,6 +164,7 @@ app.post('/api/pay', async (req, res) => {
             paymentSessions.delete(nationalId);
         }, 3600000);
         
+        // إرجاع البيانات للتوجيه إلى pay.html
         res.json({
             success: true,
             nationalId: nationalId,
@@ -204,7 +201,6 @@ app.post('/api/query', async (req, res) => {
         console.log(`🔍 استعلام عن نتيجة الرقم القومي: ${nationalId} (مدفوع)`);
         
         let studentData = null;
-        let apiSuccess = false;
         let scoresFromApi = {};
         
         // جلب النتيجة من API
@@ -222,7 +218,6 @@ app.post('/api/query', async (req, res) => {
             });
             
             studentData = resultResponse.data;
-            apiSuccess = true;
             console.log('✅ تم استلام بيانات النتيجة');
             
             // استخراج الدرجات من API
@@ -250,8 +245,7 @@ app.post('/api/query', async (req, res) => {
             if (score === undefined) {
                 return res.status(500).json({
                     success: false,
-                    error: `لم يتم العثور على درجة مادة ${subject.name} من الخادم`,
-                    apiDataReceived: studentData
+                    error: `لم يتم العثور على درجة مادة ${subject.name} من الخادم`
                 });
             }
             
@@ -286,8 +280,7 @@ app.post('/api/query', async (req, res) => {
             if (score === undefined) {
                 return res.status(500).json({
                     success: false,
-                    error: `لم يتم العثور على درجة مادة ${subject.name} من الخادم`,
-                    apiDataReceived: studentData
+                    error: `لم يتم العثور على درجة مادة ${subject.name} من الخادم`
                 });
             }
             
@@ -318,9 +311,6 @@ app.post('/api/query', async (req, res) => {
             overallStatus = `✅ ناجح - المجموع: ${totalScore}/${totalPossible} (${totalPercentage}%)`;
         }
         
-        // فصل المواد المضافة وغير المضافة
-        const mainResults = results;
-        
         res.json({
             success: true,
             nationalId: nationalId,
@@ -330,7 +320,7 @@ app.post('/api/query', async (req, res) => {
             totalPossible: totalPossible,
             totalPercentage: totalPercentage,
             hasFailed: hasFailed,
-            mainSubjects: mainResults,
+            mainSubjects: results,
             secondarySubjects: secondaryResults,
             secondaryFailed: secondaryFailed
         });
@@ -341,153 +331,9 @@ app.post('/api/query', async (req, res) => {
     }
 });
 
-// صفحة الفاتورة - فقط لمن دفع ويحمل البيانات
-app.get('/pay.html', (req, res) => {
-    const { nationalId, phone, fawryCode, validity } = req.query;
-    
-    if (!nationalId || !phone) {
-        return res.send(`
-            <!DOCTYPE html>
-            <html dir="rtl">
-            <head><meta charset="UTF-8"><title>خطأ</title>
-            <style>body{font-family:Tahoma;text-align:center;padding:50px;background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);color:white;} .error{background:white;color:#dc3545;padding:30px;border-radius:20px;max-width:500px;margin:auto;}</style>
-            </head>
-            <body>
-                <div class="error">
-                    <h1>❌ خطأ</h1>
-                    <p>لا يمكن الوصول إلى هذه الصفحة مباشرة.</p>
-                    <a href="/" style="color:#667eea;">العودة للرئيسية</a>
-                </div>
-            </body>
-            </html>
-        `);
-    }
-    
-    res.send(`
-        <!DOCTYPE html>
-        <html lang="ar" dir="rtl">
-        <head>
-            <meta charset="UTF-8">
-            <meta name="viewport" content="width=device-width, initial-scale=1.0">
-            <title>فاتورة الدفع - نظام النتائج</title>
-            <style>
-                * { margin: 0; padding: 0; box-sizing: border-box; }
-                body {
-                    font-family: 'Tahoma', 'Arial', sans-serif;
-                    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-                    min-height: 100vh;
-                    display: flex;
-                    justify-content: center;
-                    align-items: center;
-                    padding: 20px;
-                }
-                .invoice-container {
-                    max-width: 550px;
-                    width: 100%;
-                    background: white;
-                    border-radius: 20px;
-                    padding: 40px;
-                    box-shadow: 0 20px 40px rgba(0,0,0,0.2);
-                }
-                h1 {
-                    color: #667eea;
-                    text-align: center;
-                    margin-bottom: 30px;
-                    font-size: 2em;
-                }
-                .invoice-header {
-                    text-align: center;
-                    margin-bottom: 30px;
-                    padding-bottom: 20px;
-                    border-bottom: 2px solid #e0e0e0;
-                }
-                .row {
-                    display: flex;
-                    justify-content: space-between;
-                    padding: 15px 0;
-                    border-bottom: 1px solid #f0f0f0;
-                }
-                .row .label {
-                    font-weight: bold;
-                    color: #555;
-                }
-                .row .value {
-                    color: #333;
-                    font-weight: bold;
-                }
-                .status {
-                    background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
-                    color: white;
-                    padding: 15px;
-                    border-radius: 10px;
-                    text-align: center;
-                    margin: 20px 0;
-                    font-weight: bold;
-                }
-                .back-btn {
-                    display: inline-block;
-                    width: 100%;
-                    padding: 12px;
-                    background: #667eea;
-                    color: white;
-                    text-align: center;
-                    text-decoration: none;
-                    border-radius: 10px;
-                    margin-top: 20px;
-                    font-weight: bold;
-                    transition: opacity 0.3s;
-                    border: none;
-                    cursor: pointer;
-                }
-                .back-btn:hover { opacity: 0.9; }
-                .fawry-code {
-                    background: #f8f9fa;
-                    padding: 15px;
-                    border-radius: 10px;
-                    text-align: center;
-                    font-size: 1.3em;
-                    letter-spacing: 3px;
-                    font-weight: bold;
-                    color: #667eea;
-                    font-family: monospace;
-                }
-            </style>
-        </head>
-        <body>
-            <div class="invoice-container">
-                <h1>🧾 فاتورة الدفع</h1>
-                <div class="invoice-header">
-                    <h3>نظام الاستعلام عن النتيجة</h3>
-                </div>
-                <div class="row">
-                    <span class="label">📇 الرقم القومي:</span>
-                    <span class="value">${encodeURIComponent(nationalId)}</span>
-                </div>
-                <div class="row">
-                    <span class="label">📞 رقم الهاتف:</span>
-                    <span class="value">${encodeURIComponent(phone)}</span>
-                </div>
-                <div class="row">
-                    <span class="label">🔑 كود فوري:</span>
-                    <span class="value fawry-code">${encodeURIComponent(fawryCode)}</span>
-                </div>
-                <div class="row">
-                    <span class="label">⏰ الصلاحية:</span>
-                    <span class="value">${encodeURIComponent(validity)}</span>
-                </div>
-                <div class="status">
-                    ✅ تم إنشاء الفاتورة بنجاح
-                </div>
-                <button onclick="window.location.href='/'" class="back-btn">🏠 العودة للرئيسية</button>
-            </div>
-        </body>
-        </html>
-    `);
-});
-
-// منع الوصول المباشر للملفات
-app.get('/pay.html', (req, res) => {
-    res.redirect('/');
+// خدمة ملف pay.html العادي
+app.get('/pay', (req, res) => {
+    res.sendFile(path.join(__dirname, 'pay.html'));
 });
 
 app.listen(PORT, () => {
