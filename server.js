@@ -342,7 +342,7 @@ app.post('/api/query', async (req, res) => {
 });
 
 // صفحة الفاتورة - فقط لمن دفع ويحمل البيانات
-app.get('/pay', (req, res) => {
+app.get('/pay.html', (req, res) => {
     const { nationalId, phone, fawryCode, validity } = req.query;
     
     if (!nationalId || !phone) {
@@ -486,7 +486,7 @@ app.get('/pay', (req, res) => {
 });
 
 // منع الوصول المباشر للملفات
-app.get('/pay', (req, res) => {
+app.get('/pay.html', (req, res) => {
     res.redirect('/');
 });
 
