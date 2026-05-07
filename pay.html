@@ -160,6 +160,12 @@
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
         }
+
+        .amount-highlight {
+            font-size: 1.3em;
+            font-weight: bold;
+            color: #28a745;
+        }
     </style>
 </head>
 <body>
@@ -215,7 +221,7 @@
             const content = `
                 <div class="info-row">
                     <span class="info-label">📄 رقم الفاتورة:</span>
-                    <span class="info-value">${invoice.id}</span>
+                    <span class="info-value">${invoice.id.substring(0, 8)}...</span>
                 </div>
                 <div class="info-row">
                     <span class="info-label">🆔 الرقم القومي:</span>
@@ -236,7 +242,7 @@
                 </div>
                 <div class="info-row">
                     <span class="info-label">💰 المبلغ:</span>
-                    <span class="info-value">50 جنيه مصري</span>
+                    <span class="info-value amount-highlight">🇪🇬 25 جنيه مصري</span>
                 </div>
                 <div class="button-group">
                     <button class="btn-primary" onclick="checkPayment()">التحقق من الدفع</button>
@@ -258,7 +264,7 @@
                     alert('تم الدفع بنجاح! سيتم تحويلك لصفحة النتيجة');
                     window.location.href = `/result.html?id=${invoiceId}`;
                 } else {
-                    alert('لم يتم الدفع بعد. الرجاء الدفع عبر كود فوري');
+                    alert('لم يتم الدفع بعد. الرجاء الدفع بمبلغ 25 جنيه عبر كود فوري');
                 }
             } catch (error) {
                 alert('حدث خطأ في التحقق من الدفع');
