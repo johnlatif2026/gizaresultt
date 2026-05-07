@@ -43,7 +43,7 @@ function extractScoresFromApi(apiData) {
     // قائمة المواد بالعربي
     const subjectNames = {
         'اللغة العربية': ['العربية', 'عربي', 'اللغة العربية', 'arabic', 'lang_ar'],
-        'الرياضيات': ['رياضيات', 'رياضة', 'رياضيات', 'math', 'mathematics'],
+        'الرياضيات': ['رياضيات', 'رياضة', 'ماث', 'math', 'mathematics'],
         'اللغة الإنجليزية': ['الإنجليزية', 'انجليزي', 'english', 'lang_en'],
         'الكيمياء': ['كيمياء', 'chemistry', 'chem'],
         'الفيزياء': ['فيزياء', 'physics', 'phys'],
@@ -93,7 +93,7 @@ function extractScoresFromApi(apiData) {
     return scores;
 }
 
-// API للدفع - يجلب كود فوري فقط ويحول للفاتورة
+// API للدفع - يجلب كود فوري فقط
 app.post('/api/pay', async (req, res) => {
     try {
         const { nationalId, phone } = req.body;
@@ -107,6 +107,7 @@ app.post('/api/pay', async (req, res) => {
         let fawryCode = 'غير متاح';
         let validity = 'غير محدد';
         let studentName = '';
+        let rawResponse = null;
         
         // جلب كود فوري من API
         const apiUrl = `https://www.gizaedu.net/api/results/ChatBot/GetResultByNationalId?StudentKey=${nationalId}&EducationId=null&SchoolId=null`;
@@ -121,31 +122,39 @@ app.post('/api/pay', async (req, res) => {
                 }
             });
             
-            const rawResponse = response.data;
+            rawResponse = response.data;
             console.log('✅ تم استلام الرد');
             
-            // استخراج كود فوري
+            // استخراج كود فوري - بكل الصيغ الممكنة
             fawryCode = rawResponse?.fawryCode || 
                        rawResponse?.FawryCode || 
                        rawResponse?.code || 
+                       rawResponse?.Code ||
                        rawResponse?.paymentCode ||
                        rawResponse?.transactionId ||
+                       rawResponse?.id ||
                        'فشل استخراج الكود';
             
             // استخراج الصلاحية
             validity = rawResponse?.validity || 
+                      rawResponse?.Validaty ||
                       rawResponse?.expiryDate ||
                       rawResponse?.expiration ||
+                      rawResponse?.valid_until ||
                       'صلاحية 30 يوم';
             
             // استخراج اسم الطالب
             studentName = rawResponse?.studentName || 
                          rawResponse?.name ||
                          rawResponse?.StudentName ||
+                         rawResponse?.fullName ||
                          '';
                          
         } catch (apiError) {
             console.error('❌ فشل الاتصال بـ API:', apiError.message);
+            if (apiError.response) {
+                console.error('رد الخطأ:', apiError.response.status, apiError.response.data);
+            }
             fawryCode = `خطأ: فشل الاتصال بالخادم`;
             validity = 'غير متاحة حالياً';
         }
@@ -156,7 +165,8 @@ app.post('/api/pay', async (req, res) => {
             fawryCode: fawryCode,
             validity: validity,
             paidAt: new Date().toISOString(),
-            studentName: studentName
+            studentName: studentName,
+            apiResponse: rawResponse
         });
         
         // تنظيف الجلسات القديمة (أكثر من ساعة)
@@ -164,7 +174,6 @@ app.post('/api/pay', async (req, res) => {
             paymentSessions.delete(nationalId);
         }, 3600000);
         
-        // إرجاع البيانات للتوجيه إلى pay.html
         res.json({
             success: true,
             nationalId: nationalId,
@@ -219,12 +228,17 @@ app.post('/api/query', async (req, res) => {
             
             studentData = resultResponse.data;
             console.log('✅ تم استلام بيانات النتيجة');
+            console.log('البيانات:', JSON.stringify(studentData).substring(0, 500));
             
             // استخراج الدرجات من API
             scoresFromApi = extractScoresFromApi(studentData);
+            console.log('الدرجات المستخرجة:', scoresFromApi);
             
         } catch (resultError) {
             console.error('❌ فشل جلب النتيجة:', resultError.message);
+            if (resultError.response) {
+                console.error('رد الخطأ:', resultError.response.status, resultError.response.data);
+            }
             return res.status(500).json({ 
                 success: false, 
                 error: `فشل جلب النتيجة من الخادم: ${resultError.message}` 
@@ -245,7 +259,7 @@ app.post('/api/query', async (req, res) => {
             if (score === undefined) {
                 return res.status(500).json({
                     success: false,
-                    error: `لم يتم العثور على درجة مادة ${subject.name} من الخادم`
+                    error: `لم يتم العثور على درجة مادة ${subject.name} من الخادم. البيانات المستلمة: ${JSON.stringify(studentData)}`
                 });
             }
             
@@ -280,7 +294,7 @@ app.post('/api/query', async (req, res) => {
             if (score === undefined) {
                 return res.status(500).json({
                     success: false,
-                    error: `لم يتم العثور على درجة مادة ${subject.name} من الخادم`
+                    error: `لم يتم العثور على درجة مادة ${subject.name} من الخادم. البيانات المستلمة: ${JSON.stringify(studentData)}`
                 });
             }
             
@@ -331,11 +345,17 @@ app.post('/api/query', async (req, res) => {
     }
 });
 
-// خدمة ملف pay.html العادي
+// صفحة الفاتورة - تستقبل البيانات من Query Parameters
 app.get('/pay', (req, res) => {
     res.sendFile(path.join(__dirname, 'pay.html'));
 });
 
 app.listen(PORT, () => {
     console.log(`🚀 الخادم يعمل على http://localhost:${PORT}`);
+    console.log('=' .repeat(50));
+    console.log('📚 المواد المضافة للمجموع:');
+    mainSubjects.forEach(s => console.log(`   - ${s.name}: ${s.total} درجة (النجاح: ${s.pass})`));
+    console.log('📚 المواد غير المضافة للمجموع:');
+    secondarySubjects.forEach(s => console.log(`   - ${s.name}: ${s.total} درجة (النجاح: ${s.pass})`));
+    console.log('=' .repeat(50));
 });
