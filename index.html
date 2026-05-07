@@ -47,7 +47,7 @@
             padding: 30px;
             box-shadow: 0 20px 40px rgba(0,0,0,0.2);
             flex: 1;
-            min-width: 300px;
+            min-width: 350px;
             transition: transform 0.3s ease;
         }
 
@@ -110,6 +110,8 @@
             background: #f8f9fa;
             border-radius: 10px;
             display: none;
+            max-height: 500px;
+            overflow-y: auto;
         }
 
         .invoice {
@@ -123,12 +125,19 @@
         .invoice h3 {
             color: #667eea;
             margin-bottom: 15px;
+            border-bottom: 2px solid #e0e0e0;
+            padding-bottom: 10px;
+        }
+
+        .invoice h4 {
+            color: #555;
+            margin: 15px 0 10px 0;
         }
 
         .invoice-item {
             display: flex;
             justify-content: space-between;
-            padding: 10px 0;
+            padding: 8px 0;
             border-bottom: 1px solid #e0e0e0;
         }
 
@@ -140,6 +149,59 @@
         .error {
             color: #dc3545;
             font-weight: bold;
+        }
+
+        .warning {
+            color: #ff9800;
+            font-weight: bold;
+        }
+
+        .subject-failed {
+            color: #dc3545;
+            background: #ffe6e6;
+            padding: 5px 10px;
+            border-radius: 5px;
+        }
+
+        .subject-passed {
+            color: #28a745;
+        }
+
+        .main-subject {
+            background: #e8f0fe;
+        }
+
+        .secondary-subject {
+            background: #fef9e8;
+        }
+
+        .raw-data {
+            margin-top: 15px;
+            padding: 10px;
+            background: #f0f0f0;
+            border-radius: 8px;
+            font-size: 12px;
+            overflow-x: auto;
+            white-space: pre-wrap;
+            word-break: break-word;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 3px 8px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+
+        .badge-main {
+            background: #667eea;
+            color: white;
+        }
+
+        .badge-secondary {
+            background: #ff9800;
+            color: white;
         }
 
         @media (max-width: 768px) {
@@ -196,7 +258,7 @@
             const resultDiv = document.getElementById('payResult');
 
             resultDiv.style.display = 'block';
-            resultDiv.innerHTML = '<p>جاري المعالجة...</p>';
+            resultDiv.innerHTML = '<p>⏳ جاري الاتصال بالخادم...</p>';
 
             try {
                 const response = await fetch(`${API_BASE}/api/pay`, {
@@ -210,12 +272,18 @@
                     resultDiv.innerHTML = `
                         <div class="invoice">
                             <h3>🧾 فاتورة الدفع</h3>
-                            <div class="invoice-item"><strong>الرقم القومي:</strong> ${data.nationalId}</div>
-                            <div class="invoice-item"><strong>رقم الهاتف:</strong> ${data.phone}</div>
-                            <div class="invoice-item"><strong>كود فوري:</strong> ${data.fawryCode}</div>
-                            <div class="invoice-item"><strong>الصلاحية:</strong> ${data.validity}</div>
-                            <div class="invoice-item success"><strong>الحالة:</strong> تم إنشاء الفاتورة بنجاح</div>
+                            <div class="invoice-item"><strong>📇 الرقم القومي:</strong> ${data.nationalId}</div>
+                            <div class="invoice-item"><strong>📞 رقم الهاتف:</strong> ${data.phone}</div>
+                            <div class="invoice-item"><strong>🔑 كود فوري:</strong> <span class="success">${data.fawryCode}</span></div>
+                            <div class="invoice-item"><strong>⏰ الصلاحية:</strong> ${data.validity}</div>
+                            <div class="invoice-item success"><strong>✅ الحالة:</strong> ${data.message}</div>
                         </div>
+                        ${data.rawApiResponse ? `
+                        <div class="raw-data">
+                            <strong>📡 الرد الأصلي من الخادم:</strong><br>
+                            <pre>${JSON.stringify(data.rawApiResponse, null, 2)}</pre>
+                        </div>
+                        ` : ''}
                     `;
                 } else {
                     resultDiv.innerHTML = `<div class="error">❌ ${data.error}</div>`;
@@ -225,14 +293,14 @@
             }
         });
 
-        // قسم الاستعلام
+        // قسم الاستعلام عن النتيجة
         document.getElementById('queryForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             const nationalId = document.getElementById('nationalIdQuery').value;
             const resultDiv = document.getElementById('queryResult');
 
             resultDiv.style.display = 'block';
-            resultDiv.innerHTML = '<p>جاري البحث عن النتيجة...</p>';
+            resultDiv.innerHTML = '<p>⏳ جاري جلب النتيجة...</p>';
 
             try {
                 const response = await fetch(`${API_BASE}/api/query`, {
@@ -243,31 +311,76 @@
                 const data = await response.json();
 
                 if (data.success) {
-                    let subjectsHtml = '';
-                    if (data.subjects && data.subjects.length > 0) {
-                        subjectsHtml = '<h4>المواد:</h4>';
-                        data.subjects.forEach(sub => {
-                            subjectsHtml += `
-                                <div class="invoice-item">
-                                    <span>${sub.name}</span>
-                                    <span>${sub.score} / ${sub.total} ${sub.failed ? '❌ ملحق' : '✅ نجاح'}</span>
+                    let mainSubjectsHtml = '';
+                    let secondarySubjectsHtml = '';
+                    
+                    // عرض المواد المضافة للمجموع
+                    if (data.mainSubjects && data.mainSubjects.length > 0) {
+                        mainSubjectsHtml = '<h4>📖 المواد المضافة للمجموع</h4>';
+                        data.mainSubjects.forEach(sub => {
+                            mainSubjectsHtml += `
+                                <div class="invoice-item ${sub.failed ? 'subject-failed' : 'subject-passed'}">
+                                    <span><strong>${sub.name}</strong></span>
+                                    <span>${sub.score} / ${sub.total} (النجاح: ${sub.pass}) ${sub.failed ? '❌ ملحق' : '✅ نجاح'}</span>
+                                </div>
+                            `;
+                        });
+                        mainSubjectsHtml += `
+                            <div class="invoice-item success">
+                                <strong>📊 المجموع الكلي:</strong>
+                                <span>${data.totalScore} / ${data.totalPossible} (${data.totalPercentage}%)</span>
+                            </div>
+                        `;
+                    }
+                    
+                    // عرض المواد غير المضافة للمجموع
+                    if (data.secondarySubjects && data.secondarySubjects.length > 0) {
+                        secondarySubjectsHtml = '<h4>📖 المواد غير المضافة للمجموع (نجاح/رسوب فقط)</h4>';
+                        data.secondarySubjects.forEach(sub => {
+                            secondarySubjectsHtml += `
+                                <div class="invoice-item ${sub.failed ? 'subject-failed' : 'subject-passed'}">
+                                    <span><strong>${sub.name}</strong></span>
+                                    <span>${sub.score} / ${sub.total} (النجاح: ${sub.pass}) ${sub.failed ? '❌ ملحق' : '✅ نجاح'}</span>
                                 </div>
                             `;
                         });
                     }
-
+                    
+                    // تحذير المواد الملحق غير المضافة للمجموع
+                    let secondaryWarning = '';
+                    if (data.secondaryFailed && data.secondaryFailed.length > 0) {
+                        secondaryWarning = `
+                            <div class="invoice-item warning">
+                                <strong>⚠️ ملاحظة:</strong>
+                                <span>يوجد مواد ملحق (غير مضافة للمجموع): ${data.secondaryFailed.map(s => s.name).join(', ')}</span>
+                            </div>
+                        `;
+                    }
+                    
                     resultDiv.innerHTML = `
                         <div class="invoice">
                             <h3>📊 نتيجة الطالب</h3>
-                            <div class="invoice-item"><strong>الرقم القومي:</strong> ${data.nationalId}</div>
-                            <div class="invoice-item"><strong>رقم الهاتف:</strong> ${data.phone}</div>
-                            <div class="invoice-item"><strong>كود فوري:</strong> ${data.fawryCode}</div>
-                            <div class="invoice-item"><strong>الحالة العامة:</strong> ${data.overallStatus}</div>
-                            ${subjectsHtml}
+                            <div class="invoice-item"><strong>📇 الرقم القومي:</strong> ${data.nationalId}</div>
+                            <div class="invoice-item"><strong>📞 رقم الهاتف:</strong> ${data.phone}</div>
+                            <div class="invoice-item"><strong>🔑 كود فوري:</strong> ${data.fawryCode}</div>
+                            <div class="invoice-item ${data.hasFailed ? 'warning' : 'success'}">
+                                <strong>🎓 الحالة العامة:</strong>
+                                <span>${data.overallStatus}</span>
+                            </div>
+                            ${mainSubjectsHtml}
+                            ${secondarySubjectsHtml}
+                            ${secondaryWarning}
                         </div>
+                        ${data.rawApiData ? `
+                        <div class="raw-data">
+                            <strong>📡 الرد الأصلي من خادم النتائج:</strong><br>
+                            <pre>${JSON.stringify(data.rawApiData, null, 2)}</pre>
+                            <small class="${data.apiSuccess ? 'success' : 'warning'}">${data.message}</small>
+                        </div>
+                        ` : ''}
                     `;
                 } else {
-                    resultDiv.innerHTML = `<div class="error">❌ ${data.error}</div>`;
+                    resultDiv.innerHTML = `<div class="error">❌ ${data.error}<br><small>${data.details || ''}</small></div>`;
                 }
             } catch (error) {
                 resultDiv.innerHTML = `<div class="error">❌ حدث خطأ: ${error.message}</div>`;
