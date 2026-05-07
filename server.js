@@ -49,42 +49,36 @@ name:"اسم الطالب",
 isSupplement:false,
 
 subjects:[
-
-{
-name:"اللغة العربية",
-degree:"70/80",
-supplement:false
-},
-
-{
-name:"الرياضيات",
-degree:"55/60",
-supplement:false
-},
-
-{
-name:"اللغة الإنجليزية",
-degree:"38/40",
-supplement:false
-},
-
-  {
-    name:"كيمياء"
-    degree:"38/40",
-    supplement:false
-  },
-
-           {
-    name:"فيزياء"
-    degree:"38/40",
-    supplement:false
-  },
-{
-name:"التاريخ",
-degree:"18/20",
-supplement:false
-}
-
+    {
+        name:"اللغة العربية",
+        degree:"70/80",
+        supplement:false
+    },
+    {
+        name:"الرياضيات",
+        degree:"55/60",
+        supplement:false
+    },
+    {
+        name:"اللغة الإنجليزية",
+        degree:"38/40",
+        supplement:false
+    },
+    {
+        name:"كيمياء",
+        degree:"38/40",
+        supplement:false      // صححتها لـ false بدل "false"
+    },
+    {
+        name:"فيزياء",
+        degree:"38/40",
+        supplement:false      // صححتها لـ false بدل "false"
+    },
+    {
+        name:"التاريخ",
+        degree:"18/20",
+        supplement:false
+    }
 ]
 
 };
