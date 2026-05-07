@@ -1,187 +1,278 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>بوابة النتائج</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>gizaresult</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
 
-<style>
+        body {
+            font-family: 'Tahoma', 'Arial', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
 
-*{
-margin:0;
-padding:0;
-box-sizing:border-box;
-font-family:Tahoma;
-}
+        .container {
+            max-width: 1200px;
+            width: 100%;
+        }
 
-body{
-background:#f3f4f6;
-min-height:100vh;
-display:flex;
-justify-content:center;
-align-items:center;
-padding:20px;
-}
+        h1 {
+            text-align: center;
+            color: white;
+            margin-bottom: 40px;
+            font-size: 2.5em;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+        }
 
-.container{
-width:100%;
-max-width:1000px;
-display:grid;
-grid-template-columns:1fr 1fr;
-gap:20px;
-}
+        .cards {
+            display: flex;
+            gap: 30px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
 
-.card{
-background:#fff;
-padding:30px;
-border-radius:20px;
-box-shadow:0 10px 25px rgba(0,0,0,.1);
-}
+        .card {
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.2);
+            flex: 1;
+            min-width: 300px;
+            transition: transform 0.3s ease;
+        }
 
-h2{
-margin-bottom:20px;
-text-align:center;
-}
+        .card:hover {
+            transform: translateY(-5px);
+        }
 
-input{
-width:100%;
-padding:15px;
-margin-bottom:15px;
-border-radius:12px;
-border:1px solid #ddd;
-font-size:16px;
-}
+        .card h2 {
+            color: #667eea;
+            margin-bottom: 20px;
+            text-align: center;
+            font-size: 1.8em;
+        }
 
-button{
-width:100%;
-padding:15px;
-border:none;
-border-radius:12px;
-background:#2563eb;
-color:#fff;
-font-size:16px;
-cursor:pointer;
-}
+        .form-group {
+            margin-bottom: 20px;
+        }
 
-button:hover{
-background:#1d4ed8;
-}
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: #333;
+            font-weight: bold;
+        }
 
-@media(max-width:768px){
-.container{
-grid-template-columns:1fr;
-}
-}
+        input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+        }
 
-</style>
+        input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
 
+        button {
+            width: 100%;
+            padding: 14px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 18px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: opacity 0.3s;
+        }
+
+        button:hover {
+            opacity: 0.9;
+        }
+
+        .result-area {
+            margin-top: 30px;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            display: none;
+        }
+
+        .invoice {
+            background: white;
+            border: 2px solid #667eea;
+            border-radius: 15px;
+            padding: 20px;
+            margin-top: 20px;
+        }
+
+        .invoice h3 {
+            color: #667eea;
+            margin-bottom: 15px;
+        }
+
+        .invoice-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px 0;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        .success {
+            color: #28a745;
+            font-weight: bold;
+        }
+
+        .error {
+            color: #dc3545;
+            font-weight: bold;
+        }
+
+        @media (max-width: 768px) {
+            .cards {
+                flex-direction: column;
+            }
+        }
+    </style>
 </head>
 <body>
+    <div class="container">
+        <h1>gizaresult</h1>
+        <div class="cards">
+            <!-- قسم الدفع -->
+            <div class="card">
+                <h2>💰 الدفع للاستعلام</h2>
+                <form id="payForm">
+                    <div class="form-group">
+                        <label>الرقم القومي</label>
+                        <input type="text" id="nationalIdPay" placeholder="أدخل الرقم القومي" required>
+                    </div>
+                    <div class="form-group">
+                        <label>رقم الهاتف</label>
+                        <input type="tel" id="phonePay" placeholder="أدخل رقم الهاتف" required>
+                    </div>
+                    <button type="submit">دفع واستعلام</button>
+                </form>
+                <div id="payResult" class="result-area"></div>
+            </div>
 
-<div class="container">
+            <!-- قسم الاستعلام عن النتيجة -->
+            <div class="card">
+                <h2>🔍 استعلام عن النتيجة</h2>
+                <form id="queryForm">
+                    <div class="form-group">
+                        <label>الرقم القومي</label>
+                        <input type="text" id="nationalIdQuery" placeholder="أدخل الرقم القومي" required>
+                    </div>
+                    <button type="submit">استعلام</button>
+                </form>
+                <div id="queryResult" class="result-area"></div>
+            </div>
+        </div>
+    </div>
 
-<div class="card">
+    <script>
+        const API_BASE = window.location.origin;
 
-<h2>الدفع للاستعلام عن النتيجة</h2>
+        // قسم الدفع
+        document.getElementById('payForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const nationalId = document.getElementById('nationalIdPay').value;
+            const phone = document.getElementById('phonePay').value;
+            const resultDiv = document.getElementById('payResult');
 
-<input type="text" id="payNationalId" placeholder="الرقم القومي">
-<input type="text" id="payPhone" placeholder="رقم الهاتف">
+            resultDiv.style.display = 'block';
+            resultDiv.innerHTML = '<p>جاري المعالجة...</p>';
 
-<button onclick="goToPay()">
-الدفع الآن
-</button>
+            try {
+                const response = await fetch(`${API_BASE}/api/pay`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ nationalId, phone })
+                });
+                const data = await response.json();
 
-</div>
+                if (data.success) {
+                    resultDiv.innerHTML = `
+                        <div class="invoice">
+                            <h3>🧾 فاتورة الدفع</h3>
+                            <div class="invoice-item"><strong>الرقم القومي:</strong> ${data.nationalId}</div>
+                            <div class="invoice-item"><strong>رقم الهاتف:</strong> ${data.phone}</div>
+                            <div class="invoice-item"><strong>كود فوري:</strong> ${data.fawryCode}</div>
+                            <div class="invoice-item"><strong>الصلاحية:</strong> ${data.validity}</div>
+                            <div class="invoice-item success"><strong>الحالة:</strong> تم إنشاء الفاتورة بنجاح</div>
+                        </div>
+                    `;
+                } else {
+                    resultDiv.innerHTML = `<div class="error">❌ ${data.error}</div>`;
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `<div class="error">❌ حدث خطأ: ${error.message}</div>`;
+            }
+        });
 
-<div class="card">
+        // قسم الاستعلام
+        document.getElementById('queryForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const nationalId = document.getElementById('nationalIdQuery').value;
+            const resultDiv = document.getElementById('queryResult');
 
-<h2>استعلام عن النتيجة</h2>
+            resultDiv.style.display = 'block';
+            resultDiv.innerHTML = '<p>جاري البحث عن النتيجة...</p>';
 
-<input type="text" id="resultNationalId" placeholder="الرقم القومي">
+            try {
+                const response = await fetch(`${API_BASE}/api/query`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ nationalId })
+                });
+                const data = await response.json();
 
-<button onclick="getResult()">
-عرض النتيجة
-</button>
+                if (data.success) {
+                    let subjectsHtml = '';
+                    if (data.subjects && data.subjects.length > 0) {
+                        subjectsHtml = '<h4>المواد:</h4>';
+                        data.subjects.forEach(sub => {
+                            subjectsHtml += `
+                                <div class="invoice-item">
+                                    <span>${sub.name}</span>
+                                    <span>${sub.score} / ${sub.total} ${sub.failed ? '❌ ملحق' : '✅ نجاح'}</span>
+                                </div>
+                            `;
+                        });
+                    }
 
-</div>
-
-</div>
-
-<script>
-
-function goToPay(){
-
-const nationalId =
-document.getElementById("payNationalId").value;
-
-const phone =
-document.getElementById("payPhone").value;
-
-if(!nationalId || !phone){
-
-alert("اكتب البيانات كاملة");
-return;
-
-}
-
-window.location.href =
-`/pay.html?nationalId=${nationalId}&phone=${phone}`;
-
-}
-
-async function getResult(){
-
-const nationalId =
-document.getElementById("resultNationalId").value;
-
-if(!nationalId){
-
-alert("اكتب الرقم القومي");
-return;
-
-}
-
-try{
-
-const res = await fetch("/api/result",{
-
-method:"POST",
-
-headers:{
-"Content-Type":"application/json"
-},
-
-body:JSON.stringify({
-nationalId
-})
-
-});
-
-const data = await res.json();
-
-if(data.error){
-
-alert(data.error);
-return;
-
-}
-
-localStorage.setItem(
-"studentResult",
-JSON.stringify(data)
-);
-
-window.location.href="/pay.html?result=1";
-
-}catch(err){
-
-alert("السيرفر لا يعمل");
-
-}
-
-}
-
-</script>
-
+                    resultDiv.innerHTML = `
+                        <div class="invoice">
+                            <h3>📊 نتيجة الطالب</h3>
+                            <div class="invoice-item"><strong>الرقم القومي:</strong> ${data.nationalId}</div>
+                            <div class="invoice-item"><strong>رقم الهاتف:</strong> ${data.phone}</div>
+                            <div class="invoice-item"><strong>كود فوري:</strong> ${data.fawryCode}</div>
+                            <div class="invoice-item"><strong>الحالة العامة:</strong> ${data.overallStatus}</div>
+                            ${subjectsHtml}
+                        </div>
+                    `;
+                } else {
+                    resultDiv.innerHTML = `<div class="error">❌ ${data.error}</div>`;
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `<div class="error">❌ حدث خطأ: ${error.message}</div>`;
+            }
+        });
+    </script>
 </body>
 </html>
