@@ -1,0 +1,183 @@
+<!-- pay.html -->
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>invoice</title>
+
+  <style>
+    body{
+      background:#eef2ff;
+      font-family:Tahoma;
+      display:flex;
+      justify-content:center;
+      align-items:center;
+      min-height:100vh;
+      padding:20px;
+    }
+
+    .invoice{
+      width:100%;
+      max-width:700px;
+      background:#fff;
+      border-radius:20px;
+      padding:30px;
+      box-shadow:0 10px 25px rgba(0,0,0,.1);
+    }
+
+    h1{
+      text-align:center;
+      margin-bottom:25px;
+      color:#222;
+    }
+
+    .row{
+      display:flex;
+      justify-content:space-between;
+      padding:14px 0;
+      border-bottom:1px solid #eee;
+      font-size:18px;
+    }
+
+    .status{
+      margin-top:25px;
+      padding:15px;
+      background:#dcfce7;
+      color:#166534;
+      border-radius:12px;
+      text-align:center;
+      font-size:18px;
+      font-weight:bold;
+    }
+
+    .subjects{
+      margin-top:20px;
+    }
+
+    .subject{
+      background:#f8fafc;
+      padding:15px;
+      border-radius:12px;
+      margin-bottom:10px;
+    }
+  </style>
+</head>
+<body>
+
+<div class="invoice">
+
+  <h1>Invoice</h1>
+
+  <div id="content"></div>
+
+</div>
+
+<script>
+
+  const params = new URLSearchParams(window.location.search);
+
+  const resultMode = params.get("result");
+
+  const content = document.getElementById("content");
+
+  if(resultMode){
+
+    const data = JSON.parse(localStorage.getItem("studentResult"));
+
+    if(!data){
+      content.innerHTML = "<h2>لا توجد بيانات</h2>";
+    }else{
+
+      let subjectsHTML = "";
+
+      if(data.subjects){
+
+        data.subjects.forEach(sub=>{
+
+          subjectsHTML += `
+            <div class="subject">
+              <strong>${sub.name}</strong><br>
+              الدرجة: ${sub.degree}<br>
+              ملحق: ${sub.supplement ? "نعم" : "لا"}
+            </div>
+          `;
+        });
+      }
+
+      content.innerHTML = `
+        <div class="row">
+          <span>الاسم</span>
+          <span>${data.name || "غير متوفر"}</span>
+        </div>
+
+        <div class="row">
+          <span>الرقم القومي</span>
+          <span>${data.nationalId}</span>
+        </div>
+
+        <div class="row">
+          <span>الحالة</span>
+          <span>${data.isSupplement ? "ملحق" : "ناجح"}</span>
+        </div>
+
+        <div class="subjects">
+          ${subjectsHTML}
+        </div>
+      `;
+    }
+
+  }else{
+
+    const nationalId = params.get("nationalId");
+    const phone = params.get("phone");
+
+    loadInvoice(nationalId,phone);
+  }
+
+  async function loadInvoice(nationalId,phone){
+
+    const res = await fetch("/api/payment-code",{
+      method:"POST",
+      headers:{
+        "Content-Type":"application/json"
+      },
+      body:JSON.stringify({
+        nationalId,
+        phone
+      })
+    });
+
+    const data = await res.json();
+
+    content.innerHTML = `
+      <div class="row">
+        <span>الرقم القومي</span>
+        <span>${nationalId}</span>
+      </div>
+
+      <div class="row">
+        <span>رقم الهاتف</span>
+        <span>${phone}</span>
+      </div>
+
+      <div class="row">
+        <span>كود فوري</span>
+        <span>${data.code || "غير متوفر"}</span>
+      </div>
+
+      <div class="row">
+        <span>الصلاحية</span>
+        <span>24 ساعة</span>
+      </div>
+
+      <div class="status">
+        بعد الدفع يمكن الاستعلام عن النتيجة
+      </div>
+    `;
+  }
+
+</script>
+
+</body>
+</html>
