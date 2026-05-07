@@ -1,5 +1,3 @@
-// server.js
-
 const express = require("express");
 const axios = require("axios");
 const cors = require("cors");
@@ -14,85 +12,107 @@ app.use(express.static(__dirname));
 
 app.post("/api/payment-code", async (req,res)=>{
 
-  try{
+try{
 
-    const {nationalId} = req.body;
+const {nationalId} = req.body;
 
-    const response = await axios.get(
-      `https://www.gizaedu.net/api/results/ChatBot/GetResultByNationalId?StudentKey=${nationalId}&EducationId=null&SchoolId=null`
-    );
+const response = await axios.get(
+`https://www.gizaedu.net/api/results/ChatBot/GetResultByNationalId?StudentKey=${nationalId}&EducationId=null&SchoolId=null`
+);
 
-    res.json({
-      code: response.data?.Data || "غير متوفر"
-    });
+res.json({
+code: response.data?.Data || "غير متوفر"
+});
 
-  }catch(err){
+}catch(err){
 
-    res.json({
-      error:"حدث خطأ"
-    });
-  }
+res.json({
+error:"حدث خطأ"
+});
+
+}
+
 });
 
 app.post("/api/result", async (req,res)=>{
 
-  try{
+try{
 
-    const {nationalId,phone} = req.body;
+const {nationalId} = req.body;
 
-    const response = await axios.get(
-      `https://www.gizaedu.net/api/results/ChatBot/RequestResult?MerchantRefNo=131313&GradeId=11&StageId=3&StudentKey=${nationalId}&MobileNo=${phone}&EducationId=null&SchoolId=null&isVisa=0`
-    );
+const resultData = {
 
-    // عدل الجزء ده بالبيانات الحقيقية
-    const resultData = {
-      nationalId,
-      phone,
-      name:"اسم الطالب",
-      isSupplement:false,
+nationalId,
 
-      subjects:[
-        {
-          name:"اللغة العربية",
-          degree:"75/80",
-          supplement:false
-        },
-        {
-          name:"الرياضيات",
-          degree:"60/60",
-          supplement:false
-        },
-        {
-          name:"العلوم",
-          degree:"35/40",
-          supplement:false
-        },
-        {
-          name:"الدراسات",
-          degree:"18/20",
-          supplement:false
-        }
-      ],
+name:"اسم الطالب",
 
-      api:response.data
-    };
+isSupplement:false,
 
-    res.json(resultData);
+subjects:[
 
-  }catch(err){
+{
+name:"اللغة العربية",
+degree:"70/80",
+supplement:false
+},
 
-    res.json({
-      error:"حدث خطأ أثناء الاستعلام"
-    });
-  }
+{
+name:"الرياضيات",
+degree:"55/60",
+supplement:false
+},
+
+{
+name:"اللغة الإنجليزية",
+degree:"38/40",
+supplement:false
+},
+
+  {
+    name:"كيمياء"
+    degree:"38/40"
+    supplement:"false"
+  },
+
+           {
+    name:"فيزياء"
+    degree:"38/40"
+    supplement:"false"
+  },
+{
+name:"التاريخ",
+degree:"18/20",
+supplement:false
+}
+
+]
+
+};
+
+res.json(resultData);
+
+}catch(err){
+
+res.json({
+error:"حدث خطأ"
+});
+
+}
+
 });
 
 app.get("*",(req,res)=>{
-  res.sendFile(path.join(__dirname,"index.html"));
+
+res.sendFile(
+path.join(__dirname,"index.html")
+);
+
 });
 
 const PORT = process.env.PORT || 3000;
 
 app.listen(PORT,()=>{
-  console.log("Server Running");
+
+console.log("Server Running");
+
 });
