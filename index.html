@@ -1,0 +1,155 @@
+<!-- index.html -->
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>gizaresult</title>
+
+  <style>
+    *{
+      margin:0;
+      padding:0;
+      box-sizing:border-box;
+      font-family:Tahoma;
+    }
+
+    body{
+      background:#f3f5f9;
+      min-height:100vh;
+      display:flex;
+      justify-content:center;
+      align-items:center;
+      padding:30px;
+    }
+
+    .container{
+      width:100%;
+      max-width:1100px;
+      display:grid;
+      grid-template-columns:1fr 1fr;
+      gap:25px;
+    }
+
+    .card{
+      background:#fff;
+      padding:30px;
+      border-radius:20px;
+      box-shadow:0 10px 25px rgba(0,0,0,.08);
+    }
+
+    h2{
+      margin-bottom:20px;
+      color:#222;
+      text-align:center;
+    }
+
+    input{
+      width:100%;
+      padding:15px;
+      margin-bottom:15px;
+      border:1px solid #ddd;
+      border-radius:12px;
+      font-size:16px;
+      outline:none;
+    }
+
+    button{
+      width:100%;
+      padding:15px;
+      border:none;
+      border-radius:12px;
+      background:#2563eb;
+      color:#fff;
+      font-size:17px;
+      cursor:pointer;
+      transition:.3s;
+    }
+
+    button:hover{
+      background:#1d4ed8;
+    }
+
+    @media(max-width:800px){
+      .container{
+        grid-template-columns:1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+
+    <!-- الدفع -->
+    <div class="card">
+      <h2>الدفع للاستعلام عن النتيجة</h2>
+
+      <input type="text" id="payNationalId" placeholder="الرقم القومي">
+      <input type="text" id="payPhone" placeholder="رقم الهاتف">
+
+      <button onclick="goToPay()">استكمال الدفع</button>
+    </div>
+
+    <!-- الاستعلام -->
+    <div class="card">
+      <h2>استعلام عن النتيجة</h2>
+
+      <input type="text" id="resultNationalId" placeholder="الرقم القومي">
+      <input type="text" id="resultPhone" placeholder="رقم الهاتف">
+
+      <button onclick="getResult()">عرض النتيجة</button>
+    </div>
+
+  </div>
+
+<script>
+  function goToPay(){
+    const nationalId = document.getElementById("payNationalId").value;
+    const phone = document.getElementById("payPhone").value;
+
+    if(!nationalId || !phone){
+      alert("اكتب البيانات كاملة");
+      return;
+    }
+
+    window.location.href =
+      `/pay.html?nationalId=${nationalId}&phone=${phone}`;
+  }
+
+  async function getResult(){
+
+    const nationalId = document.getElementById("resultNationalId").value;
+    const phone = document.getElementById("resultPhone").value;
+
+    if(!nationalId || !phone){
+      alert("اكتب البيانات كاملة");
+      return;
+    }
+
+    const res = await fetch("/api/result",{
+      method:"POST",
+      headers:{
+        "Content-Type":"application/json"
+      },
+      body:JSON.stringify({
+        nationalId,
+        phone
+      })
+    });
+
+    const data = await res.json();
+
+    if(data.error){
+      alert(data.error);
+      return;
+    }
+
+    localStorage.setItem("studentResult",JSON.stringify(data));
+
+    window.location.href = "/pay.html?result=1";
+  }
+</script>
+
+</body>
+</html>
