@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>نظام الاستعلام عن النتيجة</title>
+    <title>فاتورة الدفع - gizaresult</title>
     <style>
         * {
             margin: 0;
@@ -15,345 +15,150 @@
             font-family: 'Tahoma', 'Arial', sans-serif;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
             padding: 20px;
         }
 
-        .container {
-            max-width: 1200px;
+        .invoice-container {
+            max-width: 600px;
             width: 100%;
-            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.2);
         }
 
         h1 {
-            text-align: center;
-            color: white;
-            margin-bottom: 40px;
-            font-size: 2.5em;
-            text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
-        }
-
-        .cards {
-            display: flex;
-            gap: 30px;
-            flex-wrap: wrap;
-            justify-content: center;
-        }
-
-        .card {
-            background: white;
-            border-radius: 20px;
-            padding: 30px;
-            box-shadow: 0 20px 40px rgba(0,0,0,0.2);
-            flex: 1;
-            min-width: 350px;
-            transition: transform 0.3s ease;
-        }
-
-        .card:hover {
-            transform: translateY(-5px);
-        }
-
-        .card h2 {
             color: #667eea;
-            margin-bottom: 20px;
             text-align: center;
-            font-size: 1.8em;
+            margin-bottom: 30px;
+            font-size: 2em;
         }
 
-        .form-group {
-            margin-bottom: 20px;
+        .invoice-header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid #e0e0e0;
         }
 
-        label {
-            display: block;
-            margin-bottom: 8px;
+        .invoice-details {
+            margin-bottom: 30px;
+        }
+
+        .row {
+            display: flex;
+            justify-content: space-between;
+            padding: 15px 0;
+            border-bottom: 1px solid #f0f0f0;
+        }
+
+        .row .label {
+            font-weight: bold;
+            color: #555;
+        }
+
+        .row .value {
             color: #333;
+        }
+
+        .status {
+            background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+            color: white;
+            padding: 15px;
+            border-radius: 10px;
+            text-align: center;
+            margin: 20px 0;
             font-weight: bold;
         }
 
-        input {
+        .back-btn {
+            display: inline-block;
             width: 100%;
             padding: 12px;
-            border: 2px solid #e0e0e0;
-            border-radius: 10px;
-            font-size: 16px;
-            transition: border-color 0.3s;
-        }
-
-        input:focus {
-            outline: none;
-            border-color: #667eea;
-        }
-
-        button {
-            width: 100%;
-            padding: 14px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: #667eea;
             color: white;
-            border: none;
+            text-align: center;
+            text-decoration: none;
             border-radius: 10px;
-            font-size: 18px;
+            margin-top: 20px;
             font-weight: bold;
-            cursor: pointer;
             transition: opacity 0.3s;
+            border: none;
+            cursor: pointer;
         }
 
-        button:hover {
+        .back-btn:hover {
             opacity: 0.9;
         }
 
-        .result-area {
-            margin-top: 30px;
-            padding: 20px;
+        .fawry-code {
             background: #f8f9fa;
+            padding: 15px;
             border-radius: 10px;
-            display: none;
-            max-height: 550px;
-            overflow-y: auto;
-        }
-
-        .invoice {
-            background: white;
-            border: 2px solid #667eea;
-            border-radius: 15px;
-            padding: 20px;
-            margin-top: 20px;
-        }
-
-        .invoice h3 {
-            color: #667eea;
-            margin-bottom: 15px;
-            border-bottom: 2px solid #e0e0e0;
-            padding-bottom: 10px;
-        }
-
-        .invoice h4 {
-            color: #555;
-            margin: 15px 0 10px 0;
-        }
-
-        .invoice-item {
-            display: flex;
-            justify-content: space-between;
-            padding: 10px 0;
-            border-bottom: 1px solid #e0e0e0;
-        }
-
-        .success {
-            color: #28a745;
-            font-weight: bold;
-        }
-
-        .error {
-            color: #dc3545;
-            font-weight: bold;
-        }
-
-        .warning {
-            color: #ff9800;
-            font-weight: bold;
-        }
-
-        .subject-failed {
-            background: #ffe6e6;
-            padding: 8px 12px;
-            border-radius: 8px;
-            margin: 5px 0;
-        }
-
-        .subject-passed {
-            background: #e6ffe6;
-            padding: 8px 12px;
-            border-radius: 8px;
-            margin: 5px 0;
-        }
-
-        .total-score {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            padding: 12px;
-            border-radius: 10px;
-            margin-top: 15px;
             text-align: center;
+            font-size: 1.2em;
+            letter-spacing: 2px;
             font-weight: bold;
-        }
-
-        @media (max-width: 768px) {
-            .cards {
-                flex-direction: column;
-            }
+            color: #667eea;
+            font-family: monospace;
         }
     </style>
 </head>
 <body>
-    <div class="container">
-        <h1>📚 نظام الاستعلام عن النتيجة</h1>
-        <div class="cards">
-            <!-- قسم الدفع -->
-            <div class="card">
-                <h2>💰 الدفع للاستعلام</h2>
-                <form id="payForm">
-                    <div class="form-group">
-                        <label>الرقم القومي</label>
-                        <input type="text" id="nationalIdPay" placeholder="أدخل الرقم القومي" required>
-                    </div>
-                    <div class="form-group">
-                        <label>رقم الهاتف</label>
-                        <input type="tel" id="phonePay" placeholder="أدخل رقم الهاتف" required>
-                    </div>
-                    <button type="submit">دفع واستعلام</button>
-                </form>
-                <div id="payResult" class="result-area"></div>
+    <div class="invoice-container">
+        <h1>🧾 فاتورة الدفع</h1>
+        <div class="invoice-header">
+            <h3>نظام الاستعلام عن النتيجة - gizaresult</h3>
+        </div>
+        <div id="invoiceContent">
+            <div class="invoice-details">
+                <div class="row">
+                    <span class="label">📇 الرقم القومي:</span>
+                    <span class="value" id="displayNationalId">-</span>
+                </div>
+                <div class="row">
+                    <span class="label">📞 رقم الهاتف:</span>
+                    <span class="value" id="displayPhone">-</span>
+                </div>
+                <div class="row">
+                    <span class="label">🔑 كود فوري:</span>
+                    <span class="value fawry-code" id="displayFawryCode">-</span>
+                </div>
+                <div class="row">
+                    <span class="label">⏰ الصلاحية:</span>
+                    <span class="value" id="displayValidity">-</span>
+                </div>
             </div>
-
-            <!-- قسم الاستعلام عن النتيجة -->
-            <div class="card">
-                <h2>🔍 استعلام عن النتيجة</h2>
-                <form id="queryForm">
-                    <div class="form-group">
-                        <label>الرقم القومي</label>
-                        <input type="text" id="nationalIdQuery" placeholder="أدخل الرقم القومي" required>
-                    </div>
-                    <button type="submit">استعلام</button>
-                </form>
-                <div id="queryResult" class="result-area"></div>
+            <div class="status">
+                ✅ تم إنشاء الفاتورة بنجاح
             </div>
         </div>
+        <button onclick="window.location.href='/'" class="back-btn">🏠 العودة للرئيسية</button>
     </div>
 
     <script>
-        const API_BASE = window.location.origin;
+        // قراءة البيانات من Query Parameters
+        window.addEventListener('DOMContentLoaded', () => {
+            const urlParams = new URLSearchParams(window.location.search);
+            
+            const nationalId = urlParams.get('nationalId');
+            const phone = urlParams.get('phone');
+            const fawryCode = urlParams.get('fawryCode');
+            const validity = urlParams.get('validity');
 
-        // قسم الدفع - يحول لصفحة pay.html مع localStorage
-        document.getElementById('payForm').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const nationalId = document.getElementById('nationalIdPay').value;
-            const phone = document.getElementById('phonePay').value;
-            const resultDiv = document.getElementById('payResult');
-            const submitBtn = e.target.querySelector('button');
+            if (nationalId) document.getElementById('displayNationalId').textContent = decodeURIComponent(nationalId);
+            if (phone) document.getElementById('displayPhone').textContent = decodeURIComponent(phone);
+            if (fawryCode) document.getElementById('displayFawryCode').textContent = decodeURIComponent(fawryCode);
+            if (validity) document.getElementById('displayValidity').textContent = decodeURIComponent(validity);
 
-            resultDiv.style.display = 'block';
-            resultDiv.innerHTML = '<p>⏳ جاري معالجة الدفع...</p>';
-            submitBtn.disabled = true;
-            submitBtn.textContent = 'جاري المعالجة...';
-
-            try {
-                const response = await fetch(`${API_BASE}/api/pay`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ nationalId, phone })
-                });
-                const data = await response.json();
-
-                if (data.success) {
-                    // تخزين البيانات في localStorage
-                    localStorage.setItem('invoice_nationalId', data.nationalId);
-                    localStorage.setItem('invoice_phone', data.phone);
-                    localStorage.setItem('invoice_fawryCode', data.fawryCode);
-                    localStorage.setItem('invoice_validity', data.validity);
-                    
-                    // التحويل لصفحة الفاتورة
-                    window.location.href = `${API_BASE}/pay.html`;
-                } else {
-                    resultDiv.innerHTML = `<div class="error">❌ ${data.error}</div>`;
-                    submitBtn.disabled = false;
-                    submitBtn.textContent = 'دفع واستعلام';
-                }
-            } catch (error) {
-                resultDiv.innerHTML = `<div class="error">❌ حدث خطأ: ${error.message}</div>`;
-                submitBtn.disabled = false;
-                submitBtn.textContent = 'دفع واستعلام';
-            }
-        });
-
-        // قسم الاستعلام عن النتيجة
-        document.getElementById('queryForm').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const nationalId = document.getElementById('nationalIdQuery').value;
-            const resultDiv = document.getElementById('queryResult');
-            const submitBtn = e.target.querySelector('button');
-
-            resultDiv.style.display = 'block';
-            resultDiv.innerHTML = '<p>⏳ جاري جلب النتيجة...</p>';
-            submitBtn.disabled = true;
-            submitBtn.textContent = 'جاري البحث...';
-
-            try {
-                const response = await fetch(`${API_BASE}/api/query`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ nationalId })
-                });
-                const data = await response.json();
-
-                if (data.success) {
-                    let mainSubjectsHtml = '';
-                    
-                    // عرض المواد المضافة للمجموع
-                    if (data.mainSubjects && data.mainSubjects.length > 0) {
-                        mainSubjectsHtml = '<h4>📖 المواد المضافة للمجموع</h4>';
-                        data.mainSubjects.forEach(sub => {
-                            mainSubjectsHtml += `
-                                <div class="invoice-item ${sub.failed ? 'subject-failed' : 'subject-passed'}">
-                                    <span><strong>${sub.name}</strong></span>
-                                    <span>${sub.score} / ${sub.total} (النجاح: ${sub.pass}) ${sub.failed ? '❌ ملحق' : '✅ نجاح'}</span>
-                                </div>
-                            `;
-                        });
-                        mainSubjectsHtml += `
-                            <div class="total-score">
-                                📊 المجموع الكلي: ${data.totalScore} / ${data.totalPossible} (${data.totalPercentage}%)
-                            </div>
-                        `;
-                    }
-                    
-                    // عرض المواد غير المضافة للمجموع
-                    let secondarySubjectsHtml = '';
-                    if (data.secondarySubjects && data.secondarySubjects.length > 0) {
-                        secondarySubjectsHtml = '<h4>📖 المواد غير المضافة للمجموع (نجاح/رسوب فقط)</h4>';
-                        data.secondarySubjects.forEach(sub => {
-                            secondarySubjectsHtml += `
-                                <div class="invoice-item ${sub.failed ? 'subject-failed' : 'subject-passed'}">
-                                    <span><strong>${sub.name}</strong></span>
-                                    <span>${sub.score} / ${sub.total} (النجاح: ${sub.pass}) ${sub.failed ? '❌ ملحق' : '✅ نجاح'}</span>
-                                </div>
-                            `;
-                        });
-                    }
-                    
-                    // تحذير المواد الملحق
-                    let secondaryWarning = '';
-                    if (data.secondaryFailed && data.secondaryFailed.length > 0) {
-                        secondaryWarning = `
-                            <div class="invoice-item warning">
-                                <strong>⚠️ ملاحظة:</strong>
-                                <span>يوجد مواد ملحق (غير مضافة للمجموع): ${data.secondaryFailed.join(', ')}</span>
-                            </div>
-                        `;
-                    }
-                    
-                    resultDiv.innerHTML = `
-                        <div class="invoice">
-                            <h3>📊 نتيجة الطالب</h3>
-                            <div class="invoice-item"><strong>📇 الرقم القومي:</strong> ${data.nationalId}</div>
-                            ${data.studentName ? `<div class="invoice-item"><strong>👤 اسم الطالب:</strong> ${data.studentName}</div>` : ''}
-                            <div class="invoice-item ${data.hasFailed ? 'warning' : 'success'}">
-                                <strong>🎓 الحالة العامة:</strong>
-                                <span>${data.overallStatus}</span>
-                            </div>
-                            ${mainSubjectsHtml}
-                            ${secondarySubjectsHtml}
-                            ${secondaryWarning}
-                        </div>
-                    `;
-                } else {
-                    resultDiv.innerHTML = `<div class="error">❌ ${data.error}</div>`;
-                }
-            } catch (error) {
-                resultDiv.innerHTML = `<div class="error">❌ حدث خطأ: ${error.message}</div>`;
-            } finally {
-                submitBtn.disabled = false;
-                submitBtn.textContent = 'استعلام';
+            // إذا لم توجد بيانات، نرجع للرئيسية
+            if (!nationalId) {
+                setTimeout(() => {
+                    window.location.href = '/';
+                }, 2000);
             }
         });
     </script>
